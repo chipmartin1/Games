@@ -1,0 +1,484 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Proportion Peak</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: quiz column on the left, sticky Skill Mountain on the right (stacked above on phones). Seven camps, one per Arkansas 7.PR standard. */
+:root{
+  --bg:#eef3f1; --ink:#132421; --muted:#566d68; --card:#ffffff; --line:#c6d6d1;
+  --accent:#0d6b63; --accent-ink:#ffffff;
+  --tile:#ffd166; --tile-ink:#2b2100; --tile-edge:#d19a14;
+  --good:#17753a; --good-bg:#dcf2e3; --bad:#b3301f; --bad-bg:#fbe3df;
+  --mtn:#9bbdb4; --mtn2:#78a196; --snow:#ffffff; --gold:#e8a900; --silver:#2f9e5a; --camp:#8a9b96;
+  --display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1c1a; --ink:#e6f1ee; --muted:#9db4ae; --card:#172a27; --line:#2d4540;
+  --accent:#52d1c4; --accent-ink:#06211e;
+  --tile:#f0b93d; --tile-ink:#241a00; --tile-edge:#a87a12;
+  --good:#6fdc93; --good-bg:#173824; --bad:#ff8f80; --bad-bg:#40201b;
+  --mtn:#2f5b55; --mtn2:#244741; --snow:#d9e8e5; --gold:#ffc83d; --silver:#5fd68b; --camp:#6f8a84; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1c1a; --ink:#e6f1ee; --muted:#9db4ae; --card:#172a27; --line:#2d4540;
+  --accent:#52d1c4; --accent-ink:#06211e;
+  --tile:#f0b93d; --tile-ink:#241a00; --tile-edge:#a87a12;
+  --good:#6fdc93; --good-bg:#173824; --bad:#ff8f80; --bad-bg:#40201b;
+  --mtn:#2f5b55; --mtn2:#244741; --snow:#d9e8e5; --gold:#ffc83d; --silver:#5fd68b; --camp:#6f8a84; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:24px 56px}
+.layout{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start}
+.main{display:flex;flex-direction:column;gap:18px;min-width:0}
+.main>section{display:flex;flex-direction:column;gap:18px;min-width:0}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(2.2rem,8vw,3.2rem);font-weight:800;letter-spacing:-.02em}
+p{margin:0}
+.sub{color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.badge{align-self:flex-start;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:6px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top strong{font-family:var(--display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.cat{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.label{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctx{font-size:1.1rem;text-wrap:pretty}
+.dt{border-collapse:collapse;align-self:flex-start;font-variant-numeric:tabular-nums}
+.dt th,.dt td{border:1px solid var(--line);padding:6px 14px;text-align:center}
+.dt th{background:color-mix(in srgb,var(--accent) 10%,transparent);font-weight:700}
+.gr{width:100%;max-width:300px;height:auto;align-self:flex-start}
+.gr .ax{stroke:var(--muted);stroke-width:1.5} .gr .gd{stroke:var(--line);stroke-width:1}
+.gr .ln{stroke:var(--accent);stroke-width:3;fill:none;stroke-linecap:round}
+.gr .pt{fill:var(--accent);stroke:var(--card);stroke-width:2}
+.gr text{fill:var(--muted);font-size:11px;font-family:var(--body)}
+.gr text.pl{fill:var(--ink);font-weight:700;font-size:12px}
+.work{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.prow{display:flex;flex-direction:column;gap:6px}
+.pline{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.eqt{font-family:var(--display);font-weight:800;font-size:1.25rem}
+.slot{min-width:84px;min-height:58px;border:3px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;padding:3px;text-align:center}
+.slot:not(.filled)::before{content:"?";color:var(--muted);font-weight:700}
+.slot.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.slot.filled{border-style:solid;border-color:transparent}
+.slot.ok{border-color:var(--good);border-style:solid} .slot.no{border-color:var(--bad);border-style:solid}
+.bank{display:flex;flex-wrap:wrap;gap:10px;min-height:76px;padding:14px;border:2px dashed var(--line);border-radius:14px}
+.bank.over{border-color:var(--accent)}
+.tile{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;background:var(--tile);color:var(--tile-ink);
+  border:0;border-bottom:5px solid var(--tile-edge);border-radius:10px;min-height:52px;min-width:56px;padding:6px 14px;max-width:100%;
+  font-family:var(--display);font-weight:800;font-size:1.15rem;line-height:1.2;font-variant-numeric:tabular-nums}
+.tile:active{cursor:grabbing}
+.tile.ghost{position:fixed;z-index:50;pointer-events:none;box-shadow:0 8px 18px rgba(0,0,0,.35);transform:rotate(-3deg)}
+.tile.dim{opacity:.35}
+.locked .tile{cursor:default}
+.fb{border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.fb.good{background:var(--good-bg);border:2px solid var(--good)} .fb.bad{background:var(--bad-bg);border:2px solid var(--bad)}
+.fb h3{font-size:1.3rem} .fb.good h3{color:var(--good)} .fb.bad h3{color:var(--bad)}
+.sol{font-variant-numeric:tabular-nums;display:flex;flex-direction:column;gap:4px;background:var(--card);border-radius:10px;padding:10px 14px;color:var(--ink)}
+.sol b{font-family:var(--display);font-size:1.1rem}
+.sol span{color:var(--muted)}
+.big{font-family:var(--display);font-weight:800;font-size:clamp(3rem,14vw,5rem);line-height:1;font-variant-numeric:tabular-nums}
+table.res{border-collapse:collapse;width:100%}
+.res th,.res td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top}
+.res th{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.scroll{overflow-x:auto}
+.stds{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.stds li{display:flex;gap:10px}
+.stds b{font-family:var(--display);min-width:68px;color:var(--accent)}
+/* Mountain */
+.mtn{position:sticky;top:16px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.mtn h2{font-size:1.15rem}
+.mtn svg{display:block;width:100%;height:auto;max-height:430px;margin:0 auto}
+.mtn .rock{fill:var(--mtn)} .mtn .shade{fill:var(--mtn2)} .mtn .snow{fill:var(--snow)}
+.mtn .trail{stroke:var(--camp);stroke-width:2;stroke-dasharray:5 5;fill:none}
+.mtn .camp{fill:var(--card);stroke:var(--camp);stroke-width:2.5}
+.mtn .camp.done{stroke:var(--accent);fill:var(--accent)}
+.mtn text{fill:var(--ink);font-size:10px;font-weight:700;font-family:var(--body)}
+.mtn .pole{stroke:var(--ink);stroke-width:2}
+#climber{transition:transform .9s ease}
+.mtn .clb{fill:var(--accent);stroke:var(--card);stroke-width:2.5} .mtn .cld{fill:var(--card)}
+.main>section[hidden]{display:none}
+.mtn .stat{font-size:.9rem;color:var(--muted)}
+.mtn .stat b{color:var(--ink)}
+.key{display:flex;gap:12px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.key i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+@media (max-width:880px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .mtn{position:static;order:-1}
+  .mtn svg{max-height:230px}
+}
+@media (prefers-reduced-motion:reduce){#climber{transition:none}}
+</style>
+
+<div class="layout">
+<div class="main">
+  <!-- INTRO -->
+  <section id="intro">
+    <span class="badge">Arkansas 7th Grade Math &middot; 7.PR</span>
+    <h1>Proportion Peak</h1>
+    <p>Climb the Skill Mountain. Each camp is one Arkansas 7.PR standard, and each camp has 3 problems. Drag boxes into the work area to build each solution. Answer a problem and your climber moves up the trail. Plant a flag at every camp.</p>
+    <div class="card">
+      <div class="label">The seven camps</div>
+      <ul class="stds" id="stdlist"></ul>
+    </div>
+    <div class="card">
+      <div class="label">How it works</div>
+      <p>Drag a box into a <b>?</b> slot, or tap a box to drop it into the next empty slot. Tap a placed box to send it back. Some boxes are decoys, so you will not use all of them. Flags: gold for 3 of 3, green for 2 of 3.</p>
+    </div>
+    <div class="row"><button class="btn" id="go">Start climbing</button></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" hidden>
+    <div class="top"><span class="sub">Problem <strong id="qn">1</strong> of <span id="qt">21</span></span><span class="sub">Correct <strong id="sc">0</strong></span></div>
+    <div class="card">
+      <div class="cat" id="cat"></div>
+      <p class="ctx" id="ctx"></p>
+      <div id="vis"></div>
+    </div>
+    <div class="work" id="work"></div>
+    <div><div class="label" style="margin-bottom:6px">Boxes</div><div class="bank" id="bank"></div></div>
+    <div class="row">
+      <button class="btn" id="check" disabled>Check my work</button>
+      <button class="btn ghost" id="reset" type="button">Reset boxes</button>
+    </div>
+    <div id="fb" aria-live="polite"></div>
+    <div class="row"><button class="btn" id="next" hidden>Next problem</button></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="end" hidden>
+    <span class="badge" id="endBadge">Summit reached</span>
+    <div class="big"><span id="final">0</span><span class="sub" style="font-size:.4em"> / 21</span></div>
+    <p id="verdict"></p>
+    <div class="scroll"><table class="res"><thead><tr><th>Standard</th><th>Camp flag</th><th>Correct</th></tr></thead><tbody id="bystd"></tbody></table></div>
+    <div id="missed"></div>
+    <div class="row"><button class="btn" id="again">Climb again</button></div>
+  </section>
+</div>
+
+<aside class="mtn" aria-label="Skill Mountain progress">
+  <h2>Skill Mountain</h2>
+  <svg id="mt" viewBox="0 0 300 380" role="img" aria-label="Mountain with seven camps"></svg>
+  <div class="stat" id="mstat"></div>
+  <div class="key"><span><i style="background:var(--gold)"></i>3 of 3</span><span><i style="background:var(--silver)"></i>2 of 3</span><span><i style="background:var(--camp)"></i>Visited</span></div>
+</aside>
+</div>
+
+<script>
+(function(){
+  var STD=[
+    {c:'7.PR.1',t:'Find the unit rate (constant of proportionality)'},
+    {c:'7.PR.2',t:'Unit rates with complex fractions'},
+    {c:'7.PR.3',t:'Multi-step ratio and percent problems'},
+    {c:'7.PR.4',t:'Decide if a relationship is proportional'},
+    {c:'7.PR.5',t:'Compare two proportional relationships'},
+    {c:'7.PR.6',t:'Write equations in the form y = mx'},
+    {c:'7.PR.7',t:'Explain points on a proportional graph'}
+  ];
+  var tb=function(h,a,b){return {h:h,r:[a,b]}};
+  // Question format: p = parts of a row ('#' is a movable-box slot). ok = correct boxes in slot order. alts = other full correct answers.
+  // sw = groups of slot positions that may be in any order. d = decoy boxes.
+  var Q=[
+    {s:0,ctx:'The table shows a proportional relationship. Find the constant of proportionality k.',table:tb(['x','y'],[2,4,6],[6,12,18]),
+     rows:[{l:'Constant of proportionality',p:['k =','#','÷','#','=','#']}],ok:['6','2','3'],alts:[['12','4','3'],['18','6','3']],d:['1/3','48','8'],
+     why:'Divide any y by its matching x. 12 ÷ 4 = 3, so k = 3.'},
+    {s:0,ctx:'The graph of a proportional relationship passes through the point (4, 10). Find the unit rate.',graph:{pts:[[0,0],[4,10]],lab:[1]},
+     rows:[{l:'Unit rate',p:['y ÷ x =','#','÷','#','=','#']}],ok:['10','4','2.5'],d:['40','14','0.4'],
+     why:'The unit rate is y for 1 unit of x. 10 ÷ 4 = 2.5.'},
+    {s:0,ctx:'A bakery uses 12 cups of flour to make 8 loaves of bread. How many cups of flour does one loaf need?',
+     rows:[{l:'Cups per loaf',p:['#','÷','#','=','#']}],ok:['12','8','1.5'],d:['96','0.67','4'],
+     why:'Cups ÷ loaves = 12 ÷ 8 = 1.5 cups per loaf.'},
+    {s:1,ctx:'A hiker walks 1/2 mile in 1/4 hour. How many miles per hour is that?',
+     rows:[{l:'Miles per hour',p:['#','÷','#','=','#']}],ok:['1/2','1/4','2'],d:['1/8','3/4','4'],
+     why:'1/2 ÷ 1/4 = 1/2 × 4 = 2 miles per hour.'},
+    {s:1,ctx:'A recipe uses 3/4 cup of sugar for 1/2 of a batch. How many cups of sugar make one whole batch?',
+     rows:[{l:'Cups per batch',p:['#','÷','#','=','#']}],ok:['3/4','1/2','1 1/2'],d:['3/8','1 1/4','2 1/2'],
+     why:'3/4 ÷ 1/2 = 3/4 × 2 = 6/4 = 1 1/2 cups.'},
+    {s:1,ctx:'A painter covers 2/3 of a wall in 1/6 hour. How many walls can the painter cover in one hour?',
+     rows:[{l:'Walls per hour',p:['#','÷','#','=','#']}],ok:['2/3','1/6','4'],d:['1/9','1/4','5/6'],
+     why:'2/3 ÷ 1/6 = 2/3 × 6 = 4 walls per hour.'},
+    {s:2,ctx:'An $80 jacket is 25% off, and then 8% sales tax is added. Find the final price.',
+     rows:[{l:'Final price',p:['#','×','#','×','#','=','#']}],ok:['$80','0.75','1.08','$64.80'],sw:[[0,1,2]],d:['0.25','1.25','$78'],
+     why:'Paying 75% of the price is × 0.75. Adding 8% tax is × 1.08. $80 × 0.75 × 1.08 = $64.80.'},
+    {s:2,ctx:'Rent rose from $800 to $920. Find the percent increase.',
+     rows:[{l:'Percent increase',p:['(','#','−','#',')','÷','#','=','#']}],ok:['$920','$800','$800','15%'],d:['$120','12%','$1,720'],
+     why:'Change = $920 − $800 = $120. Divide by the original: $120 ÷ $800 = 0.15, which is 15%.'},
+    {s:2,ctx:'A student estimates a bus ride will take 40 minutes. It really takes 50 minutes. Find the percent error.',
+     rows:[{l:'Percent error',p:['(','#','−','#',')','÷','#','=','#']}],ok:['50','40','50','20%'],sw:[[0,1]],d:['10','25%','90'],
+     why:'The error is 10 minutes. Percent error = error ÷ actual value = 10 ÷ 50 = 0.20, which is 20%.'},
+    {s:3,ctx:'Is the relationship in the table proportional? Find each ratio y ÷ x, then decide.',table:tb(['x','y'],[1,2,3],[4,8,12]),
+     rows:[{l:'Ratios y ÷ x',p:['','#',',','#',',','#']},{l:'Conclusion',p:['The relationship is','#']}],ok:['4','4','4','proportional'],d:['3','12','not proportional'],
+     why:'Every ratio is 4, so the ratios are equivalent. The relationship is proportional.'},
+    {s:3,ctx:'Is the relationship in the table proportional? Find each ratio y ÷ x, then decide.',table:tb(['x','y'],[1,2,3],[3,5,7]),
+     rows:[{l:'Ratios y ÷ x',p:['','#',',','#',',','#']},{l:'Conclusion',p:['The relationship is','#']}],ok:['3','5/2','7/3','not proportional'],d:['2','4','proportional'],
+     why:'The ratios are 3, 5/2 and 7/3. They are not equal, so the relationship is not proportional.'},
+    {s:3,ctx:'The graph is a straight line through (0, 2) and (2, 6). Is the relationship proportional?',graph:{pts:[[0,2],[2,6]],lab:[0,1]},
+     rows:[{l:'Does the line pass through (0, 0)?',p:['#']},{l:'Conclusion',p:['The relationship is','#']}],ok:['No','not proportional'],d:['Yes','proportional','Maybe'],
+     why:'A proportional graph is a straight line through the origin. This line crosses the y-axis at 2, so it is not proportional.'},
+    {s:4,ctx:'Store A sells apples with the equation y = 4x, where y is the cost in dollars for x pounds. Store B’s prices are in the table. Which store charges less per pound?',table:tb(['Pounds','Cost ($)'],[2,3,4],[10,15,20]),
+     rows:[{l:'Store A, dollars per pound',p:['#']},{l:'Store B, dollars per pound',p:['#']},{l:'Lower price per pound',p:['#']}],ok:['4','5','Store A'],d:['15','3','Store B'],
+     why:'Store A: y = 4x, so $4 per pound. Store B: 15 ÷ 3 = $5 per pound. Store A costs less per pound.'},
+    {s:4,ctx:'Runner A’s distance is y = 6x, where y is miles after x hours. Runner B ran 20 miles in 4 hours. Who is faster?',
+     rows:[{l:'Runner A, miles per hour',p:['#']},{l:'Runner B, miles per hour',p:['#']},{l:'Faster runner',p:['#']}],ok:['6','5','Runner A'],d:['20','4','Runner B'],
+     why:'Runner A: 6 miles per hour. Runner B: 20 ÷ 4 = 5 miles per hour. Runner A is faster.'},
+    {s:4,ctx:'Plant A grows with y = 2.5x, where y is centimeters after x days. Plant B’s graph passes through (4, 12). Which plant grows faster?',graph:{pts:[[0,0],[4,12]],lab:[1]},
+     rows:[{l:'Plant A, centimeters per day',p:['#']},{l:'Plant B, centimeters per day',p:['#']},{l:'Faster growth',p:['#']}],ok:['2.5','3','Plant B'],d:['12','4','Plant A'],
+     why:'Plant A: 2.5 cm per day. Plant B: 12 ÷ 4 = 3 cm per day. Plant B grows faster.'},
+    {s:5,ctx:'The table shows a proportional relationship. Find m, then write the equation y = mx.',table:tb(['x','y'],[2,4,6],[10,20,30]),
+     rows:[{l:'Constant m',p:['m =','#','÷','#','=','#']},{l:'Equation',p:['#']}],ok:['10','2','5','y = 5x'],alts:[['20','4','5','y = 5x'],['30','6','5','y = 5x']],d:['y = 10x','y = x + 5','50'],
+     why:'m = y ÷ x = 10 ÷ 2 = 5, so the equation is y = 5x.'},
+    {s:5,ctx:'A gym charges $12 per class. Let y be the total cost in dollars for x classes. Write the equation.',
+     rows:[{l:'Constant m (cost per class)',p:['m =','#']},{l:'Equation',p:['#']}],ok:['12','y = 12x'],d:['y = x + 12','y = x/12','1/12'],
+     why:'The cost per class is the constant m = 12, so y = 12x.'},
+    {s:5,ctx:'The graph is a straight line through the origin and the point (4, 6). Find m, then write the equation.',graph:{pts:[[0,0],[4,6]],lab:[1]},
+     rows:[{l:'Constant m',p:['m =','#','÷','#','=','#']},{l:'Equation',p:['#']}],ok:['6','4','1.5','y = 1.5x'],d:['y = 6x','y = 4x','0.67'],
+     why:'m = y ÷ x = 6 ÷ 4 = 1.5, so the equation is y = 1.5x.'},
+    {s:6,ctx:'On the graph of y = 3x, y is the cost in dollars and x is the number of pounds of grapes. What does the point (1, 3) mean?',graph:{pts:[[0,0],[1,3],[3,9]],lab:[1]},
+     rows:[{l:'The point (1, 3) means',p:['#','costs','#']}],ok:['1 pound','$3'],d:['3 pounds','$1','$4'],
+     why:'In (1, 3), x is 1 pound and y is $3. It is the unit rate: $3 per pound.'},
+    {s:6,ctx:'A graph shows the distance y in miles after x hours of walking at a steady pace. The line passes through the origin. What does the origin (0, 0) mean?',graph:{pts:[[0,0],[2,6]],lab:[0]},
+     rows:[{l:'The origin (0, 0) means',p:['after','#','you have walked','#']}],ok:['0 hours','0 miles'],d:['1 hour','1 mile','6 miles'],
+     why:'At x = 0 hours, the distance is y = 0 miles. Nothing has happened yet.'},
+    {s:6,ctx:'A graph shows the distance y in miles after x hours of biking at a steady pace. Explain the point (2, 8), then find the unit rate point (1, r).',graph:{pts:[[0,0],[2,8],[4,16]],lab:[1]},
+     rows:[{l:'The point (2, 8) means',p:['after','#','you have gone','#']},{l:'Unit rate point',p:['(1,','#',')']}],ok:['2 hours','8 miles','4'],d:['8 hours','2 miles','16'],
+     why:'(2, 8) means 8 miles after 2 hours. 8 ÷ 2 = 4, so the unit rate point is (1, 4): 4 miles per hour.'}
+  ];
+  var PER=3,NQ=Q.length;
+  var slotCount=function(q){return q.ok.length};
+  var allAlts=function(q){return [q.ok].concat(q.alts||[])};
+  Q.forEach(function(q){var seen={};allAlts(q).forEach(function(a){a.forEach(function(t){seen[t]=1})});var o=[];q.d.forEach(function(t){if(!seen[t]){seen[t]=1;o.push(t)}});q.d=o});
+
+  var $=function(id){return document.getElementById(id)};
+  var esc=function(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})};
+  var S={i:0,score:0,tiles:[],slots:[],locked:false,res:[],std:[],answered:0};
+  var drag=null,suppress=false;
+  function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+  function show(id){['intro','quiz','end'].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
+  function tileText(id){for(var i=0;i<S.tiles.length;i++)if(S.tiles[i].id===id)return S.tiles[i].text}
+
+  // ---------- Mountain ----------
+  var NS='http://www.w3.org/2000/svg';
+  var PTS=[[40,350],[200,322],[90,286],[220,250],[122,215],[205,176],[155,125],[175,58]];
+  function mountainBase(){
+    var h='';
+    h+='<polygon class="rock" points="0,360 80,170 110,200 175,40 300,360"/>';
+    h+='<polygon class="shade" points="175,40 300,360 215,360 150,150"/>';
+    h+='<polygon class="snow" points="175,40 154,92 167,85 180,99 195,91"/>';
+    h+='<polyline class="trail" points="'+PTS.map(function(p){return p.join(',')}).join(' ')+'"/>';
+    h+='<g id="camps"></g><g id="flags"></g>';
+    h+='<g id="climber" style="transform:translate(40px,350px)"><ellipse cx="0" cy="4" rx="11" ry="3.5" fill="rgba(0,0,0,.25)"/><rect class="clb" x="-6" y="-8" width="12" height="13" rx="4"/><circle class="clb" cx="0" cy="-15" r="7"/><circle class="cld" cx="0" cy="-15" r="2.5"/></g>';
+    $('mt').innerHTML=h;
+  }
+  function flagColor(r){return r.c>=3?'var(--gold)':r.c>=2?'var(--silver)':'var(--camp)'}
+  function drawMountain(){
+    var camps='',flags='';
+    for(var k=1;k<=7;k++){
+      var p=PTS[k],r=S.std[k-1],done=r&&r.n>=PER;
+      camps+='<circle class="camp'+(done?' done':'')+'" cx="'+p[0]+'" cy="'+p[1]+'" r="5"/>';
+      var lx=p[0]>150?p[0]-10:p[0]+10,anc=p[0]>150?'end':'start';
+      if(k<7)camps+='<text x="'+lx+'" y="'+(p[1]+4)+'" text-anchor="'+anc+'">'+k+'</text>';
+      if(done){
+        var col=flagColor(r),fh=k===7?22:16;
+        flags+='<line class="pole" x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[0]+'" y2="'+(p[1]-fh)+'"/>'+
+          '<polygon points="'+p[0]+','+(p[1]-fh)+' '+(p[0]+(k===7?16:12))+','+(p[1]-fh+(k===7?5:4))+' '+p[0]+','+(p[1]-fh+(k===7?10:8))+'" style="fill:'+col+';stroke:var(--ink);stroke-width:1"/>';
+      }
+    }
+    $('camps').innerHTML=camps;$('flags').innerHTML=flags;
+    var t=Math.min(S.answered/PER,7),f=Math.floor(t),fr=t-f,a=PTS[f],b=PTS[Math.min(f+1,7)];
+    var x=a[0]+(b[0]-a[0])*fr,y=a[1]+(b[1]-a[1])*fr;
+    $('climber').style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)';
+    var camp=Math.min(Math.floor(S.answered/PER),6);
+    var line;
+    if(S.answered>=NQ)line='<b>Summit reached.</b> '+S.answered+' of '+NQ+' problems climbed.';
+    else line='<b>Camp '+(Math.min(Math.floor(S.answered/PER),6)+1)+' of 7</b> &middot; '+STD[camp].c+'<br>'+S.answered+' of '+NQ+' problems climbed.';
+    $('mstat').innerHTML=line;
+    $('mt').setAttribute('aria-label','Mountain with seven camps. '+S.answered+' of '+NQ+' problems climbed.');
+  }
+
+  // ---------- Visuals ----------
+  function tableEl(t){
+    var h='<table class="dt"><tbody>';
+    for(var r=0;r<2;r++){h+='<tr><th>'+esc(t.h[r])+'</th>'+t.r[r].map(function(v){return '<td>'+esc(v)+'</td>'}).join('')+'</tr>'}
+    return h+'</tbody></table>';
+  }
+  function graphEl(g){
+    var W=280,H=210,L=34,B=28,T=14,R=16,pw=W-L-R,ph=H-T-B;
+    var mx=Math.max.apply(null,g.pts.map(function(p){return p[0]})),my=Math.max.apply(null,g.pts.map(function(p){return p[1]}));
+    var xm=Math.max(4,Math.ceil(mx*1.25)),ym=Math.max(4,Math.ceil(my*1.2));
+    var step=function(m){return m<=6?1:m<=12?2:m<=30?5:10},sx=step(xm),sy=step(ym);
+    xm=Math.ceil(xm/sx)*sx;ym=Math.ceil(ym/sy)*sy;
+    var X=function(v){return L+v/xm*pw},Y=function(v){return T+ph-v/ym*ph};
+    var s='<svg class="gr" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Graph of the line through '+g.pts.map(function(p){return '('+p[0]+', '+p[1]+')'}).join(', ')+'">';
+    for(var i=0;i<=xm;i+=sx){s+='<line class="gd" x1="'+X(i)+'" y1="'+T+'" x2="'+X(i)+'" y2="'+(T+ph)+'"/><text x="'+X(i)+'" y="'+(H-10)+'" text-anchor="middle">'+i+'</text>'}
+    for(var j=0;j<=ym;j+=sy){s+='<line class="gd" x1="'+L+'" y1="'+Y(j)+'" x2="'+(L+pw)+'" y2="'+Y(j)+'"/><text x="'+(L-6)+'" y="'+(Y(j)+4)+'" text-anchor="end">'+j+'</text>'}
+    s+='<line class="ax" x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(T+ph)+'"/><line class="ax" x1="'+L+'" y1="'+(T+ph)+'" x2="'+(L+pw)+'" y2="'+(T+ph)+'"/>';
+    s+='<text x="'+(L+pw)+'" y="'+(H-10)+'" text-anchor="end" class="pl" dy="-14">x</text><text x="'+(L+8)+'" y="'+(T+10)+'" class="pl">y</text>';
+    var a=g.pts[0],b=g.pts[g.pts.length-1],dx=b[0]-a[0],dy=b[1]-a[1];
+    // extend the line a little past the last point
+    var ex=b[0]+dx*0.12,ey=b[1]+dy*0.12;
+    s+='<polyline class="ln" points="'+X(a[0])+','+Y(a[1])+' '+X(Math.min(ex,xm))+','+Y(Math.min(ey,ym))+'"/>';
+    g.pts.forEach(function(p,i){
+      s+='<circle class="pt" cx="'+X(p[0])+'" cy="'+Y(p[1])+'" r="5"/>';
+      if((g.lab||[]).indexOf(i)>=0){var right=p[0]<xm*0.6;s+='<text class="pl" x="'+(X(p[0])+(right?9:-9))+'" y="'+(Y(p[1])+(p[1]<=0?-9:-8))+'" text-anchor="'+(right?'start':'end')+'">('+p[0]+', '+p[1]+')</text>'}
+    });
+    return s+'</svg>';
+  }
+
+  // ---------- Question rendering ----------
+  function load(){
+    var q=Q[S.i],n=0;
+    S.tiles=shuffle(q.ok.concat(q.d).map(function(t){return {id:'t'+(n++),text:t}}));
+    S.slots=[];for(var k=0;k<slotCount(q);k++)S.slots.push(null);
+    S.locked=false;
+    $('qn').textContent=S.i+1;$('qt').textContent=NQ;$('sc').textContent=S.score;
+    $('cat').textContent=STD[q.s].c+' · '+STD[q.s].t;
+    $('ctx').textContent=q.ctx;
+    $('vis').innerHTML=(q.table?tableEl(q.table):'')+(q.graph?graphEl(q.graph):'');
+    $('vis').hidden=!(q.table||q.graph);
+    $('fb').innerHTML='';$('next').hidden=true;$('check').hidden=false;$('reset').hidden=false;
+    drawMountain();render();
+  }
+  function tileEl(t,from){
+    var b=document.createElement('button');b.type='button';b.className='tile';b.textContent=t.text;
+    b.dataset.id=t.id;b.dataset.from=from;b.setAttribute('aria-label',t.text+(from==='bank'?', tap to place':', tap to remove'));
+    return b;
+  }
+  function render(){
+    var q=Q[S.i],w=$('work'),bank=$('bank'),k=0;w.innerHTML='';bank.innerHTML='';
+    q.rows.forEach(function(r){
+      var row=document.createElement('div');row.className='prow';
+      var lb=document.createElement('span');lb.className='label';lb.textContent=r.l;row.appendChild(lb);
+      var ln=document.createElement('div');ln.className='pline';
+      r.p.forEach(function(x){
+        if(x==='#'){
+          var i=k++,s=document.createElement('div');s.className='slot';s.dataset.slot=i;
+          var id=S.slots[i];if(id){s.classList.add('filled');s.appendChild(tileEl({id:id,text:tileText(id)},i))}
+          ln.appendChild(s);
+        }else if(x!==''){var e=document.createElement('span');e.className='eqt';e.textContent=x;ln.appendChild(e)}
+      });
+      row.appendChild(ln);w.appendChild(row);
+    });
+    S.tiles.forEach(function(t){if(S.slots.indexOf(t.id)<0)bank.appendChild(tileEl(t,'bank'))});
+    $('quiz').classList.toggle('locked',S.locked);
+    $('check').disabled=S.locked||S.slots.some(function(x){return x===null});
+  }
+  function place(id,si){var from=S.slots.indexOf(id),occ=S.slots[si];S.slots[si]=id;if(from>=0&&from!==si)S.slots[from]=occ;render()}
+  function unplace(id){var f=S.slots.indexOf(id);if(f>=0)S.slots[f]=null;render()}
+
+  // ---------- Drag and tap ----------
+  document.addEventListener('pointerdown',function(e){
+    var t=e.target.closest&&e.target.closest('.tile');
+    if(!t||S.locked||$('quiz').hidden||(e.pointerType==='mouse'&&e.button!==0))return;
+    drag={id:t.dataset.id,el:t,x:e.clientX,y:e.clientY,moved:false,ghost:null};
+  });
+  document.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    if(!drag.moved){
+      if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<7)return;
+      drag.moved=true;
+      var g=drag.el.cloneNode(true);g.classList.add('ghost');
+      var r=drag.el.getBoundingClientRect();g.style.width=r.width+'px';g.style.height=r.height+'px';
+      document.body.appendChild(g);drag.ghost=g;drag.dx=r.width/2;drag.dy=r.height/2;drag.el.classList.add('dim');
+    }
+    drag.ghost.style.left=(e.clientX-drag.dx)+'px';drag.ghost.style.top=(e.clientY-drag.dy)+'px';
+    var over=document.elementFromPoint(e.clientX,e.clientY),sl=over&&over.closest('.slot');
+    document.querySelectorAll('.slot.over,.bank.over').forEach(function(n){n.classList.remove('over')});
+    if(sl)sl.classList.add('over');else if(over&&over.closest('#bank'))$('bank').classList.add('over');
+    e.preventDefault();
+  },{passive:false});
+  function endDrag(e,cancel){
+    if(!drag)return;
+    var d=drag;drag=null;
+    if(!d.moved)return;
+    d.ghost.remove();
+    document.querySelectorAll('.slot.over,.bank.over').forEach(function(n){n.classList.remove('over')});
+    suppress=true;setTimeout(function(){suppress=false},0);
+    if(cancel){render();return}
+    var over=document.elementFromPoint(e.clientX,e.clientY),sl=over&&over.closest('.slot');
+    if(sl)place(d.id,Number(sl.dataset.slot));
+    else if(over&&over.closest('#work')===null)unplace(d.id);
+    else render();
+  }
+  document.addEventListener('pointerup',function(e){endDrag(e,false)});
+  document.addEventListener('pointercancel',function(e){endDrag(e,true)});
+  document.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('.tile');
+    if(!t||t.classList.contains('ghost')||suppress||S.locked)return;
+    if(t.dataset.from==='bank'){var f=S.slots.indexOf(null);if(f>=0)place(t.dataset.id,f)}
+    else unplace(t.dataset.id);
+  });
+
+  // ---------- Checking ----------
+  function evaluate(q,txt){
+    var best=null;
+    allAlts(q).forEach(function(alt){
+      var hits=txt.map(function(t,i){return t===alt[i]});
+      (q.sw||[]).forEach(function(g){
+        var A=g.map(function(i){return alt[i]}).sort().join('|'),B=g.map(function(i){return txt[i]}).sort().join('|');
+        if(A===B)g.forEach(function(i){hits[i]=true});
+      });
+      var n=hits.filter(Boolean).length;
+      if(!best||n>best.n)best={n:n,hits:hits,alt:alt};
+    });
+    return best;
+  }
+  function lines(q,alt){
+    var k=0;
+    return q.rows.map(function(r){
+      var t=r.p.map(function(x){return x==='#'?alt[k++]:x}).filter(function(x){return x!==''}).join(' ');
+      t=t.replace(/\( /g,'(').replace(/ \)/g,')').replace(/ ,/g,',');
+      return '<div><span>'+esc(r.l)+':</span> <b>'+esc(t)+'</b></div>';
+    }).join('');
+  }
+  $('check').onclick=function(){
+    if(S.locked)return;
+    var q=Q[S.i],txt=S.slots.map(tileText),ev=evaluate(q,txt),ok=ev.n===slotCount(q);
+    S.locked=true;S.answered++;
+    var r=S.std[q.s]||(S.std[q.s]={c:0,n:0});r.n++;if(ok){r.c++;S.score++}
+    S.res.push({i:S.i,ok:ok});
+    $('sc').textContent=S.score;
+    var sol='<div class="sol">'+lines(q,ev.alt)+'</div><div>'+esc(q.why)+'</div>';
+    $('fb').innerHTML=ok?'<div class="fb good"><h3>Correct! Up the trail you go.</h3>'+sol+'</div>'
+      :'<div class="fb bad"><h3>'+ev.n+' of '+slotCount(q)+' boxes in the right place.</h3><div>Red slots show what to fix. A correct solution:</div>'+sol+'</div>';
+    $('check').hidden=true;$('reset').hidden=true;
+    $('next').textContent=S.i>=NQ-1?'See my results':'Next problem';$('next').hidden=false;$('next').focus();
+    render();
+    document.querySelectorAll('.slot').forEach(function(s){s.classList.add(ev.hits[Number(s.dataset.slot)]?'ok':'no')});
+    drawMountain();
+  };
+  $('reset').onclick=function(){if(S.locked)return;S.slots=S.slots.map(function(){return null});render()};
+  $('next').onclick=function(){if(S.i>=NQ-1){finish();return}S.i++;load()};
+
+  function finish(){
+    $('final').textContent=S.score;
+    $('endBadge').textContent=S.score>=19?'Summit reached':'Back at base camp';
+    $('endBadge').textContent='Summit reached';
+    $('verdict').textContent=S.score>=19?'Outstanding. You planted flags across the whole mountain.':S.score>=15?'Strong climb. Review the problems you missed below.':S.score>=10?'Good effort. Study the missed problems and climb again.':'Keep climbing. Read each solution below, then try the mountain again.';
+    var rows='';
+    STD.forEach(function(s,i){var r=S.std[i]||{c:0,n:0};
+      var col=r.c>=3?'var(--gold)':r.c>=2?'var(--silver)':'var(--camp)',nm=r.c>=3?'Gold':r.c>=2?'Green':'Visited';
+      rows+='<tr><td><b>'+s.c+'</b><br><span class="sub">'+esc(s.t)+'</span></td><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+col+';margin-right:6px"></span>'+nm+'</td><td>'+r.c+' of '+r.n+'</td></tr>'});
+    $('bystd').innerHTML=rows;
+    var miss=S.res.filter(function(r){return !r.ok});
+    if(!miss.length)$('missed').innerHTML='<div class="fb good"><h3>No missed problems.</h3></div>';
+    else{
+      var h='<h2 style="font-size:1.4rem;margin-bottom:8px">Review these</h2><div style="display:flex;flex-direction:column;gap:12px">';
+      miss.forEach(function(r){var q=Q[r.i];h+='<div class="card"><div class="cat">Problem '+(r.i+1)+' · '+STD[q.s].c+'</div><p>'+esc(q.ctx)+'</p><div class="sol">'+lines(q,q.ok)+'</div><p>'+esc(q.why)+'</p></div>'});
+      $('missed').innerHTML=h+'</div>';
+    }
+    drawMountain();show('end');
+  }
+  function start(){S.i=0;S.score=0;S.res=[];S.std=[];S.answered=0;show('quiz');load()}
+  $('go').onclick=start;$('again').onclick=start;
+
+  $('stdlist').innerHTML=STD.map(function(s){return '<li><b>'+s.c+'</b><span>'+esc(s.t)+'</span></li>'}).join('');
+  mountainBase();drawMountain();
+})();
+</script>
+
+</body></html>
