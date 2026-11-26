@@ -1,0 +1,307 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Percent Sprint</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: one centered game column; start menu -> 10-question round -> results. Price-tag question card is the focal point. */
+:root{
+  --bg:#eef3f1; --ink:#13241f; --muted:#5a6d66; --card:#ffffff; --line:#cfdad5;
+  --accent:#0e6e6e; --accent-ink:#ffffff; --tag:#ffcf33; --tag-ink:#2a2200;
+  --good:#1b7f3b; --good-bg:#dff3e5; --bad:#b83225; --bad-bg:#fbe4e0;
+  --display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1b18; --ink:#e7f0ec; --muted:#9fb3ab; --card:#18292540; --line:#2b403a;
+  --accent:#4cc3b8; --accent-ink:#06201d; --tag:#ffcf33; --tag-ink:#2a2200;
+  --good:#6fdc93; --good-bg:#17382444; --bad:#ff8b7d; --bad-bg:#40201b66; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1b18; --ink:#e7f0ec; --muted:#9fb3ab; --card:#18292540; --line:#2b403a;
+  --accent:#4cc3b8; --accent-ink:#06201d; --tag:#ffcf33; --tag-ink:#2a2200;
+  --good:#6fdc93; --good-bg:#17382444; --bad:#ff8b7d; --bad-bg:#40201b66; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.1}
+h1{font-size:clamp(2.4rem,9vw,3.6rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.6rem;font-weight:800}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.sub{color:var(--muted)}
+.brand{display:inline-block;background:var(--tag);color:var(--tag-ink);font-family:var(--display);font-weight:800;
+  padding:4px 14px 4px 22px;clip-path:polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%);font-size:.95rem;letter-spacing:.04em;text-transform:uppercase;align-self:flex-start}
+.menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.skill{text-align:left;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.skill:hover{border-color:var(--accent)}
+.skill b{font-family:var(--display);font-size:1.1rem}
+.skill span{color:var(--muted);font-size:.9rem}
+.skill.mixed{grid-column:1/-1;background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.skill.mixed span{color:inherit;opacity:.85}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hud .stat{display:flex;flex-direction:column;line-height:1.1}
+.hud .stat small{color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:.7rem}
+.hud .stat strong{font-family:var(--display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.lives{display:flex;gap:4px;font-size:1.6rem;line-height:1}
+.lives .on{color:var(--bad)} .lives .off{color:var(--line)}
+.dots{display:flex;gap:6px}
+.dots i{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.dots i.done{background:var(--good)} .dots i.miss{background:var(--bad)} .dots i.now{background:var(--accent)}
+.tagcard{background:var(--tag);color:var(--tag-ink);border-radius:14px;padding:22px 22px 22px 56px;position:relative;
+  box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.tagcard::before{content:"";position:absolute;left:20px;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;
+  background:var(--bg);box-shadow:inset 0 2px 3px rgba(0,0,0,.35)}
+.tagcard .kind{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.75}
+.tagcard .q{font-family:var(--display);font-weight:600;font-size:clamp(1.3rem,5vw,1.75rem);line-height:1.25;margin-top:6px;text-wrap:pretty}
+.answer{display:flex;gap:10px;flex-wrap:wrap}
+.field{flex:1 1 160px;min-width:0;display:flex;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:0 14px}
+.field:focus-within{border-color:var(--accent)}
+.field span{color:var(--muted);font-weight:700;font-size:1.2rem}
+.field input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:1.4rem;font-weight:700;padding:12px 6px;outline:none;font-variant-numeric:tabular-nums}
+.field.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.hint{background:transparent;border:0;color:var(--accent);font-weight:700;text-decoration:underline;padding:6px 0}
+.note{background:var(--card);border:2px dashed var(--line);border-radius:10px;padding:10px 14px}
+.fb{border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.fb.good{background:var(--good-bg);border:2px solid var(--good)}
+.fb.bad{background:var(--bad-bg);border:2px solid var(--bad)}
+.fb h3{font-size:1.3rem}
+.fb.good h3{color:var(--good)} .fb.bad h3{color:var(--bad)}
+.work{font-variant-numeric:tabular-nums}
+.big{font-family:var(--display);font-weight:800;font-size:clamp(3rem,14vw,5rem);line-height:1;font-variant-numeric:tabular-nums}
+.rank{display:inline-block;background:var(--tag);color:var(--tag-ink);font-family:var(--display);font-weight:800;padding:4px 14px;border-radius:8px}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.scroll{overflow-x:auto}
+@media (prefers-reduced-motion:reduce){.field.shake{animation:none}}
+</style>
+
+<div class="wrap">
+  <!-- START -->
+  <section id="start" class="wrap" style="gap:18px">
+    <span class="brand">7th Grade Math</span>
+    <h1>Percent Sprint</h1>
+    <p class="sub">Ten questions per round. You get three lives, so a wrong answer costs one. Keep a streak going for bonus points. Grab a pencil and scratch paper; no calculator needed, every number is friendly.</p>
+    <p id="best" class="sub"></p>
+    <div class="menu" id="menu"></div>
+  </section>
+
+  <!-- PLAY -->
+  <section id="play" class="wrap" hidden>
+    <div class="hud">
+      <div class="stat"><small>Score</small><strong id="score">0</strong></div>
+      <div class="stat"><small>Streak</small><strong id="streak">0</strong></div>
+      <div class="stat"><small>Question</small><strong id="qnum">1/10</strong></div>
+      <div class="lives" id="lives" aria-label="Lives left"></div>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="tagcard"><div class="kind" id="kind"></div><div class="q" id="question"></div></div>
+    <form class="answer" id="form" autocomplete="off">
+      <label class="field" id="field"><span id="pre"></span><input id="ans" type="text" inputmode="decimal" aria-label="Your answer"><span id="post"></span></label>
+      <button class="btn" id="check" type="submit">Check</button>
+    </form>
+    <div class="row"><button class="hint" id="hintBtn" type="button">Show a hint (-5 points)</button><span class="sub" id="fmtNote"></span></div>
+    <div class="note" id="hint" hidden></div>
+    <div id="fb" aria-live="polite"></div>
+    <div class="row"><button class="btn" id="next" hidden>Next question</button><button class="btn ghost" id="quit" type="button">Quit round</button></div>
+  </section>
+
+  <!-- END -->
+  <section id="end" class="wrap" hidden>
+    <span class="brand" id="endTitle">Round over</span>
+    <div class="big" id="finalScore">0</div>
+    <div class="row"><span class="rank" id="rank"></span><span class="sub" id="endNote"></span></div>
+    <div class="scroll"><table><thead><tr><th>Skill</th><th>Correct</th></tr></thead><tbody id="breakdown"></tbody></table></div>
+    <div class="row"><button class="btn" id="again">Play again</button><button class="btn ghost" id="menuBtn">Change skill</button></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var pick=function(a){return a[Math.floor(Math.random()*a.length)]};
+  var r2=function(n){return Math.round(n*100)/100};
+  var money=function(n){n=r2(n);return '$'+(Number.isInteger(n)?n:n.toFixed(2))};
+  var num=function(n){return String(r2(n))};
+
+  var SKILLS={
+    of:{name:'Percent of a number',desc:'Find 15% of 80',gen:function(){
+      var p=pick([5,10,15,20,25,30,40,60,75]),n=pick([20,40,60,80,120,160,200,240,300,400]);
+      return {q:'What is '+p+'% of '+n+'?',a:p*n/100,unit:'',
+        hint:'Turn '+p+'% into a decimal ('+p/100+') and multiply, or find 10% first and build up.',
+        why:p+'% = '+p/100+', and '+p/100+' × '+n+' = '+num(p*n/100)+'.'};}},
+    convert:{name:'Fractions, decimals, percents',desc:'Switch between all three',gen:function(){
+      var t=pick([0,1,2]);
+      if(t===0){var d=pick([0.07,0.35,0.6,0.08,0.45,0.9,0.125,0.04,0.72,1.2]);
+        return {q:'Write '+d+' as a percent.',a:r2(d*100),unit:'%',hint:'Move the decimal point two places to the right.',why:d+' × 100 = '+num(d*100)+'%.'};}
+      if(t===1){var den=pick([2,4,5,8,10,20,25]),nu=1+Math.floor(Math.random()*(den-1));
+        return {q:'Write '+nu+'/'+den+' as a percent.',a:r2(nu/den*100),unit:'%',hint:'Divide '+nu+' by '+den+' to get a decimal, then multiply by 100.',why:nu+' ÷ '+den+' = '+num(nu/den)+', and × 100 = '+num(nu/den*100)+'%.'};}
+      var p=pick([6,15,40,3,85,50,110,9,72]);
+      return {q:'Write '+p+'% as a decimal.',a:r2(p/100),unit:'',hint:'Move the decimal point two places to the left.',why:p+' ÷ 100 = '+num(p/100)+'.'};}},
+    discount:{name:'Sales and discounts',desc:'Sale price and savings',gen:function(){
+      var pr=pick([20,40,60,80,120,150,200,250]),p=pick([10,15,20,25,30,40,50]),save=pr*p/100;
+      if(Math.random()<.5) return {q:'A jacket costs '+money(pr)+' and is '+p+'% off. How much do you save?',a:save,unit:'$',
+        hint:'Find '+p+'% of '+money(pr)+'.',why:p+'% of '+money(pr)+' = '+money(save)+'.'};
+      return {q:'A jacket costs '+money(pr)+' and is '+p+'% off. What is the sale price?',a:pr-save,unit:'$',
+        hint:'Find the discount first, then subtract it. Or multiply by '+(100-p)+'% since you pay that part.',
+        why:'Discount: '+p+'% of '+money(pr)+' = '+money(save)+'. Sale price: '+money(pr)+' − '+money(save)+' = '+money(pr-save)+'.'};}},
+    taxtip:{name:'Tax and tips',desc:'Total cost with extras',gen:function(){
+      var pr=pick([20,30,45,50,60,80,100,120,150,200]);
+      if(Math.random()<.5){var r=pick([5,6,8,10]),tx=pr*r/100;
+        return {q:'Your game costs '+money(pr)+' and sales tax is '+r+'%. What is the total?',a:pr+tx,unit:'$',
+          hint:'Find the tax with '+r+'% of '+money(pr)+', then add it on.',why:'Tax: '+money(tx)+'. Total: '+money(pr)+' + '+money(tx)+' = '+money(pr+tx)+'.'};}
+      var t=pick([10,15,18,20]),tp=pr*t/100;
+      return {q:'Dinner costs '+money(pr)+'. You leave a '+t+'% tip. How much is the tip?',a:tp,unit:'$',
+        hint:'Find '+t+'% of '+money(pr)+'.',why:t+'% of '+money(pr)+' = '+money(tp)+'.'};}},
+    change:{name:'Percent change',desc:'Increase and decrease',gen:function(){
+      var old=pick([20,40,50,80,100,200,250]),p=pick([10,20,25,50,5,15,30,40]),up=Math.random()<.5,nw=old*(up?1+p/100:1-p/100);
+      return {q:'A price goes from '+money(old)+' to '+money(nw)+'. What is the percent '+(up?'increase':'decrease')+'?',a:p,unit:'%',
+        hint:'Change = '+money(Math.abs(nw-old))+'. Divide the change by the ORIGINAL amount, then multiply by 100.',
+        why:'Change = '+money(Math.abs(nw-old))+'. '+num(Math.abs(nw-old))+' ÷ '+old+' = '+p/100+', which is '+p+'%.'};}},
+    whole:{name:'Find the part or whole',desc:'What percent? What number?',gen:function(){
+      var w=pick([20,40,60,80,100,120,200,250]),p=pick([10,20,25,30,40,50,60,75]),part=w*p/100;
+      if(Math.random()<.5) return {q:part+' is '+p+'% of what number?',a:w,unit:'',
+        hint:'Divide the part by the percent written as a decimal: '+part+' ÷ '+p/100+'.',why:part+' ÷ '+p/100+' = '+w+'.'};
+      return {q:'What percent of '+w+' is '+part+'?',a:p,unit:'%',
+        hint:'Divide the part by the whole, then multiply by 100.',why:part+' ÷ '+w+' = '+p/100+', which is '+p+'%.'};}},
+    interest:{name:'Simple interest',desc:'I = P × r × t',gen:function(){
+      var P=pick([100,200,300,400,500,800,1000]),r=pick([2,3,4,5,6,8]),t=pick([1,2,3,4,5]),I=P*r*t/100;
+      return {q:'You deposit '+money(P)+' at '+r+'% simple interest per year. How much interest do you earn in '+t+' year'+(t>1?'s':'')+'?',a:I,unit:'$',
+        hint:'Use I = P × r × t, with r as a decimal ('+r/100+').',why:'I = '+P+' × '+r/100+' × '+t+' = '+money(I)+'.'};}},
+    markup:{name:'Markup',desc:'Store cost to selling price',gen:function(){
+      var c=pick([20,40,50,60,80,100,120,200]),p=pick([10,20,25,30,40,50,60,75,100]),m=c*p/100,t=pick([0,1,2]);
+      if(t===0) return {q:'A store buys a skateboard for '+money(c)+' and marks it up '+p+'%. What is the selling price?',a:c+m,unit:'$',
+        hint:'Markup is a percent of the store\'s cost. Find '+p+'% of '+money(c)+', then add it to the cost.',
+        why:'Markup: '+p+'% of '+money(c)+' = '+money(m)+'. Selling price: '+money(c)+' + '+money(m)+' = '+money(c+m)+'.'};
+      if(t===1) return {q:'A shop pays '+money(c)+' for a backpack and marks it up '+p+'%. How much is the markup in dollars?',a:m,unit:'$',
+        hint:'Find '+p+'% of the cost, '+money(c)+'.',why:p+'% of '+money(c)+' = '+money(m)+'.'};
+      return {q:'A store buys a hoodie for '+money(c)+' and sells it for '+money(c+m)+'. What is the percent markup?',a:p,unit:'%',
+        hint:'Markup = '+money(m)+'. Divide the markup by the store\'s COST, then multiply by 100.',
+        why:'Markup = '+money(c+m)+' − '+money(c)+' = '+money(m)+'. '+num(m)+' ÷ '+c+' = '+p/100+', which is '+p+'%.'};}}
+  };
+  var ORDER=['of','convert','discount','taxtip','change','whole','interest','markup'];
+  var ROUND=10,LIVES=3;
+
+  var $=function(id){return document.getElementById(id)};
+  var S={mode:'mixed',i:0,score:0,streak:0,lives:LIVES,q:null,locked:false,hinted:false,hist:[],results:[],tally:{}};
+
+  function best(k){try{return Number(localStorage.getItem('pct-best-'+k))||0}catch(e){return 0}}
+  function saveBest(k,v){try{localStorage.setItem('pct-best-'+k,String(v))}catch(e){}}
+
+  function buildMenu(){
+    var m=$('menu');m.innerHTML='';
+    var mk=function(key,name,desc,cls){
+      var b=document.createElement('button');b.className='skill '+(cls||'');
+      b.innerHTML='<b></b><span></span>';b.firstChild.textContent=name;b.lastChild.textContent=desc+(best(key)?'  ·  Best '+best(key):'');
+      b.onclick=function(){startRound(key)};m.appendChild(b);};
+    mk('mixed','Mixed challenge','All eight skills, shuffled together','mixed');
+    ORDER.forEach(function(k){mk(k,SKILLS[k].name,SKILLS[k].desc)});
+  }
+
+  function show(id){['start','play','end'].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
+
+  function startRound(mode){
+    S.mode=mode;S.i=0;S.score=0;S.streak=0;S.lives=LIVES;S.results=[];S.tally={};
+    // Mixed rounds cycle through a shuffled skill list so every skill appears.
+    S.queue=[];
+    for(var n=0;n<ROUND;n++) S.queue.push(mode==='mixed'?null:mode);
+    if(mode==='mixed'){var pool=ORDER.slice().sort(function(){return Math.random()-.5});
+      for(var j=0;j<ROUND;j++)S.queue[j]=pool[j%pool.length];}
+    S.seen={};
+    show('play');nextQ();
+  }
+
+  function render(){
+    $('score').textContent=S.score;$('streak').textContent=S.streak;
+    $('qnum').textContent=(S.i+1)+'/'+ROUND;
+    var l='';for(var i=0;i<LIVES;i++)l+='<span class="'+(i<S.lives?'on':'off')+'">&#9829;</span>';
+    $('lives').innerHTML=l;
+    var d='';for(var k=0;k<ROUND;k++){var c=k<S.results.length?(S.results[k]?'done':'miss'):(k===S.i?'now':'');d+='<i class="'+c+'"></i>'}
+    $('dots').innerHTML=d;
+  }
+
+  function nextQ(){
+    var key=S.queue[S.i],q,tries=0;
+    do{q=SKILLS[key].gen();tries++}while(S.seen[q.q]&&tries<20);
+    S.seen[q.q]=1;q.skill=key;S.q=q;S.locked=false;S.hinted=false;
+    $('kind').textContent=SKILLS[key].name;$('question').textContent=q.q;
+    $('pre').textContent=q.unit==='$'?'$':'';$('post').textContent=q.unit==='%'?'%':'';
+    $('fmtNote').textContent=q.unit==='$'?'Use dollars and cents if needed.':'';
+    $('ans').value='';$('ans').disabled=false;$('check').disabled=false;
+    $('hint').hidden=true;$('hintBtn').hidden=false;$('fb').innerHTML='';$('next').hidden=true;
+    render();$('ans').focus();
+  }
+
+  function parse(s){s=String(s).replace(/[$,%\s]/g,'');if(s===''||isNaN(Number(s)))return NaN;return Number(s)}
+
+  function fmtAns(q){return q.unit==='$'?money(q.a):num(q.a)+(q.unit==='%'?'%':'')}
+
+  $('hintBtn').onclick=function(){
+    if(S.locked||S.hinted)return;S.hinted=true;
+    $('hint').textContent=S.q.hint;$('hint').hidden=false;$('hintBtn').hidden=true;
+  };
+
+  $('form').onsubmit=function(e){
+    e.preventDefault();
+    if(S.locked)return;
+    var v=parse($('ans').value);
+    if(isNaN(v)){var f=$('field');f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake');
+      $('fb').innerHTML='<div class="note">Type a number to answer, like 12 or 12.50.</div>';return;}
+    S.locked=true;$('ans').disabled=true;$('check').disabled=true;$('hintBtn').hidden=true;
+    var ok=Math.abs(v-S.q.a)<0.006;
+    var t=S.tally[S.q.skill]||(S.tally[S.q.skill]={c:0,n:0});t.n++;
+    var fb=$('fb'),html;
+    if(ok){
+      S.streak++;t.c++;
+      var bonus=Math.min(S.streak-1,5)*10,gain=100+bonus-(S.hinted?5:0);S.score+=gain;
+      html='<div class="fb good"><h3>Correct! +'+gain+'</h3><div class="work">'+esc(S.q.why)+'</div>'+
+        (bonus?'<div class="sub">Streak bonus: +'+bonus+'</div>':'')+'</div>';
+    }else{
+      S.streak=0;S.lives--;
+      html='<div class="fb bad"><h3>Not quite. The answer is '+esc(fmtAns(S.q))+'.</h3><div class="work">'+esc(S.q.why)+'</div></div>';
+    }
+    S.results.push(ok);fb.innerHTML=html;render();
+    var over=S.lives<=0||S.i>=ROUND-1;
+    $('next').textContent=over?'See results':'Next question';$('next').hidden=false;$('next').focus();
+  };
+
+  function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+
+  $('next').onclick=function(){
+    if(S.lives<=0||S.i>=ROUND-1){finish(false);return}
+    S.i++;nextQ();
+  };
+  $('quit').onclick=function(){finish(true)};
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&S.locked&&!$('play').hidden&&document.activeElement!==$('next')){e.preventDefault();$('next').click()}
+  });
+
+  function finish(quit){
+    var key=S.mode,prev=best(key),rec=S.score>prev&&S.score>0;
+    if(rec)saveBest(key,S.score);
+    var correct=S.results.filter(Boolean).length,won=!quit&&S.lives>0;
+    $('endTitle').textContent=quit?'Round ended':(S.lives<=0?'Out of lives':'Round complete');
+    $('finalScore').textContent=S.score;
+    var rk=S.score>=1100?'Percent Pro':S.score>=800?'Sharp Shopper':S.score>=450?'Getting There':'Keep Practicing';
+    $('rank').textContent=rk;
+    $('endNote').textContent=correct+' of '+S.results.length+' correct'+(rec?'  ·  New best!':prev?'  ·  Best '+prev:'');
+    var rows='';
+    Object.keys(S.tally).forEach(function(k){var t=S.tally[k];
+      rows+='<tr><td>'+esc(SKILLS[k].name)+'</td><td>'+t.c+' of '+t.n+'</td></tr>'});
+    $('breakdown').innerHTML=rows||'<tr><td colspan="2" class="sub">No questions answered.</td></tr>';
+    show('end');
+  }
+  $('again').onclick=function(){startRound(S.mode)};
+  $('menuBtn').onclick=function(){buildMenu();show('start')};
+
+  buildMenu();
+})();
+</script>
+
+</body></html>
