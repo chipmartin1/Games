@@ -1,0 +1,315 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Equation Builder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: one column. The equation sits on top, then a step-by-step work area with empty slots, then a bank of movable boxes. */
+:root{
+  --bg:#eef3f1; --ink:#132421; --muted:#566d68; --card:#ffffff; --line:#c6d6d1;
+  --accent:#0d6b63; --accent-ink:#ffffff;
+  --tile:#ffd166; --tile-ink:#2b2100; --tile-edge:#d19a14;
+  --op:#bfd7ff; --op-ink:#0f2347; --op-edge:#7ea6e6;
+  --good:#17753a; --good-bg:#dcf2e3; --bad:#b3301f; --bad-bg:#fbe3df;
+  --display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1c1a; --ink:#e6f1ee; --muted:#9db4ae; --card:#172a27; --line:#2d4540;
+  --accent:#52d1c4; --accent-ink:#06211e;
+  --tile:#f0b93d; --tile-ink:#241a00; --tile-edge:#a87a12;
+  --op:#8fb4f5; --op-ink:#0b1d3d; --op-edge:#5c82c4;
+  --good:#6fdc93; --good-bg:#173824; --bad:#ff8f80; --bad-bg:#40201b; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1c1a; --ink:#e6f1ee; --muted:#9db4ae; --card:#172a27; --line:#2d4540;
+  --accent:#52d1c4; --accent-ink:#06211e;
+  --tile:#f0b93d; --tile-ink:#241a00; --tile-edge:#a87a12;
+  --op:#8fb4f5; --op-ink:#0b1d3d; --op-edge:#5c82c4;
+  --good:#6fdc93; --good-bg:#173824; --bad:#ff8f80; --bad-bg:#40201b; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:24px 56px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(2.2rem,8vw,3.2rem);font-weight:800;letter-spacing:-.02em}
+p{margin:0}
+.sub{color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.badge{align-self:flex-start;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:6px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top strong{font-family:var(--display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.cat{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.label{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctx{font-size:1.05rem}
+.given{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.eqbig{font-family:var(--display);font-weight:800;font-size:clamp(1.8rem,7vw,2.6rem);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.work{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.steprow{display:grid;grid-template-columns:78px 1fr 1fr;gap:10px;align-items:center}
+.steprow.one{grid-template-columns:78px 1fr}
+.steprow .label{align-self:center}
+.slot{min-height:62px;border:3px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;min-width:0;padding:3px;text-align:center}
+.slot:not(.filled)::before{content:attr(data-ph);color:var(--muted);font-size:.85rem}
+.slot.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.slot.filled{border-style:solid;border-color:transparent}
+.slot.ok{border-color:var(--good);border-style:solid} .slot.no{border-color:var(--bad);border-style:solid}
+.bank{display:flex;flex-wrap:wrap;gap:10px;min-height:76px;padding:14px;border:2px dashed var(--line);border-radius:14px}
+.bank.over{border-color:var(--accent)}
+.tile{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;background:var(--tile);color:var(--tile-ink);
+  border:0;border-bottom:5px solid var(--tile-edge);border-radius:10px;min-height:52px;padding:6px 14px;max-width:100%;
+  font-family:var(--display);font-weight:800;font-size:1.15rem;line-height:1.2;font-variant-numeric:tabular-nums}
+.tile.op{background:var(--op);color:var(--op-ink);border-bottom-color:var(--op-edge);font-family:var(--body);font-weight:700;font-size:1rem}
+.slot .tile{width:100%}
+.tile:active{cursor:grabbing}
+.tile.ghost{position:fixed;z-index:50;pointer-events:none;box-shadow:0 8px 18px rgba(0,0,0,.35);transform:rotate(-3deg)}
+.tile.dim{opacity:.35}
+.locked .tile{cursor:default}
+.fb{border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.fb.good{background:var(--good-bg);border:2px solid var(--good)} .fb.bad{background:var(--bad-bg);border:2px solid var(--bad)}
+.fb h3{font-size:1.3rem} .fb.good h3{color:var(--good)} .fb.bad h3{color:var(--bad)}
+.sol{font-variant-numeric:tabular-nums;display:flex;flex-direction:column;gap:4px;background:var(--card);border-radius:10px;padding:10px 14px;color:var(--ink)}
+.sol b{font-family:var(--display);font-size:1.15rem}
+.sol span{color:var(--muted)}
+.big{font-family:var(--display);font-weight:800;font-size:clamp(3rem,14vw,5rem);line-height:1;font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.scroll{overflow-x:auto}
+@media (max-width:560px){.steprow,.steprow.one{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <!-- INTRO -->
+  <section id="intro" class="wrap">
+    <span class="badge">7th Grade Math</span>
+    <h1>Equation Builder</h1>
+    <p>Solve 20 two-step equations by building the solution one step at a time. For each problem, drag boxes into the work area to show what you do, what the new equation is, and a check that proves your answer.</p>
+    <div class="card">
+      <div class="label">How it works</div>
+      <p>Work backward: undo the last operation first. Do the same thing to both sides. When the whole group in parentheses is being multiplied, undo that multiplication first.</p>
+      <p>Drag a box into a slot, or tap a box to drop it into the next empty slot. Tap a placed box to send it back. Some boxes are decoys, so you will not use all of them. Blue boxes describe a move. Yellow boxes are equations.</p>
+    </div>
+    <div class="row"><button class="btn" id="go">Start the quiz</button></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" class="wrap" hidden>
+    <div class="top"><span class="sub">Problem <strong id="qn">1</strong> of <span id="qt">20</span></span><span class="sub">Score <strong id="sc">0</strong></span></div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="card">
+      <div class="cat" id="cat"></div>
+      <p class="ctx" id="ctx" hidden></p>
+      <div class="given"><span class="label">Solve</span><span class="eqbig" id="given"></span></div>
+    </div>
+    <div class="work" id="work"></div>
+    <div><div class="label" style="margin-bottom:6px">Boxes</div><div class="bank" id="bank"></div></div>
+    <div class="row">
+      <button class="btn" id="check" disabled>Check my steps</button>
+      <button class="btn ghost" id="reset" type="button">Reset boxes</button>
+    </div>
+    <div id="fb" aria-live="polite"></div>
+    <div class="row"><button class="btn" id="next" hidden>Next problem</button></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="end" class="wrap" hidden>
+    <span class="badge">Quiz complete</span>
+    <div class="big"><span id="final">0</span><span class="sub" style="font-size:.4em"> / 20</span></div>
+    <p id="verdict"></p>
+    <p class="sub" id="stepsum"></p>
+    <div class="scroll"><table><thead><tr><th>Equation type</th><th>Solved</th></tr></thead><tbody id="bycat"></tbody></table></div>
+    <div id="missed"></div>
+    <div class="row"><button class="btn" id="again">Take it again</button></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var fmt=function(n){return n<0?'−'+Math.abs(n):String(n)};
+  var fx=function(a){return a===1?'x':a===-1?'−x':fmt(a)+'x'};
+  var uniq=function(ok,d){var seen={};ok.forEach(function(t){seen[t]=1});return d.filter(function(t){if(seen[t])return false;seen[t]=1;return true})};
+
+  // Each builder returns the given equation, the five correct boxes in order
+  // [move 1, equation 1, move 2, solution, check], and decoy boxes.
+  var B={
+    A:function(a,b,c){var x=(c-b)/a,k=fmt(a)+'('+fmt(x)+')';return {cat:'px + q = r',given:fx(a)+' + '+b+' = '+fmt(c),x:x,
+      ok:['Subtract '+b+' from both sides',fx(a)+' = '+fmt(c-b),'Divide both sides by '+fmt(a),'x = '+fmt(x),k+' + '+b+' = '+fmt(c)],
+      d:['Add '+b+' to both sides','Divide both sides by '+b,fx(a)+' = '+fmt(c+b),'x = '+fmt(c-b),k+' − '+b+' = '+fmt(c)]};},
+    B:function(a,b,c){var x=(c+b)/a,k=fmt(a)+'('+fmt(x)+')';return {cat:'px − q = r',given:fx(a)+' − '+b+' = '+fmt(c),x:x,
+      ok:['Add '+b+' to both sides',fx(a)+' = '+fmt(c+b),'Divide both sides by '+fmt(a),'x = '+fmt(x),k+' − '+b+' = '+fmt(c)],
+      d:['Subtract '+b+' from both sides','Divide both sides by '+b,fx(a)+' = '+fmt(c-b),'x = '+fmt(c+b),k+' + '+b+' = '+fmt(c)]};},
+    C:function(a,b,c){var x=a*(c-b),k=fmt(x)+'/'+a;return {cat:'x/p ± q = r',given:'x/'+a+' + '+b+' = '+fmt(c),x:x,
+      ok:['Subtract '+b+' from both sides','x/'+a+' = '+fmt(c-b),'Multiply both sides by '+a,'x = '+fmt(x),k+' + '+b+' = '+fmt(c)],
+      d:['Add '+b+' to both sides','Divide both sides by '+a,'x/'+a+' = '+fmt(c+b),'x = '+fmt(c-b),k+' − '+b+' = '+fmt(c)]};},
+    D:function(a,b,c){var x=a*(c+b),k=fmt(x)+'/'+a;return {cat:'x/p ± q = r',given:'x/'+a+' − '+b+' = '+fmt(c),x:x,
+      ok:['Add '+b+' to both sides','x/'+a+' = '+fmt(c+b),'Multiply both sides by '+a,'x = '+fmt(x),k+' − '+b+' = '+fmt(c)],
+      d:['Subtract '+b+' from both sides','Divide both sides by '+a,'x/'+a+' = '+fmt(c-b),'x = '+fmt(c+b),k+' + '+b+' = '+fmt(c)]};},
+    E:function(a,b,c){var x=c/a-b;return {cat:'p(x ± q) = r',given:fmt(a)+'(x + '+b+') = '+fmt(c),x:x,
+      ok:['Divide both sides by '+fmt(a),'x + '+b+' = '+fmt(c/a),'Subtract '+b+' from both sides','x = '+fmt(x),fmt(a)+'('+fmt(x)+' + '+b+') = '+fmt(c)],
+      d:['Multiply both sides by '+fmt(a),'Add '+b+' to both sides','x + '+b+' = '+fmt(c*a),'x = '+fmt(c/a),fmt(a)+'('+fmt(x)+' − '+b+') = '+fmt(c)]};},
+    F:function(a,b,c){var x=c/a+b;return {cat:'p(x ± q) = r',given:fmt(a)+'(x − '+b+') = '+fmt(c),x:x,
+      ok:['Divide both sides by '+fmt(a),'x − '+b+' = '+fmt(c/a),'Add '+b+' to both sides','x = '+fmt(x),fmt(a)+'('+fmt(x)+' − '+b+') = '+fmt(c)],
+      d:['Multiply both sides by '+fmt(a),'Subtract '+b+' from both sides','x − '+b+' = '+fmt(c*a),'x = '+fmt(c/a),fmt(a)+'('+fmt(x)+' + '+b+') = '+fmt(c)]};}
+  };
+  var SPEC=[
+    ['A',3,5,20],['A',2,7,19],['B',4,3,21],['B',5,6,29],['C',3,4,9],['C',5,2,6],['D',4,3,2],['D',2,5,1],
+    ['E',3,4,27],['E',2,6,22],['F',4,3,20],['F',5,2,35],
+    ['A',4,9,1],['B',3,7,-13],['A',-2,7,1],['C',3,7,4],
+    ['A',8,12,60,'A Little Rock gym charges a $12 sign-up fee plus $8 per visit. Jada paid $60 in all. Let x be the number of visits.'],
+    ['B',6,4,32,'Six friends each paid the same amount x for a ticket. After a $4 coupon was taken off the total, they paid $32.'],
+    ['E',3,2,24,'Three friends each buy a pass that costs x dollars plus a $2 fee. Together they pay $24.'],
+    ['C',4,3,8,'A jar of marbles is shared equally by 4 friends. Each friend then finds 3 more marbles and has 8. Let x be the starting number of marbles.']
+  ];
+  var Q=SPEC.map(function(s){var q=B[s[0]](s[1],s[2],s[3]);q.ctx=s[4]||'';q.d=uniq(q.ok,q.d);return q});
+  var PH=['What you do','New equation','What you do','Solution','Check'];
+
+  var $=function(id){return document.getElementById(id)};
+  var esc=function(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})};
+  var S={i:0,score:0,steps:0,tiles:[],slots:[],locked:false,res:[],tally:{}};
+  var drag=null,suppress=false;
+
+  function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+  function show(id){['intro','quiz','end'].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
+  function tileText(id){for(var i=0;i<S.tiles.length;i++)if(S.tiles[i].id===id)return S.tiles[i].text}
+  function isOp(t){return /^(Add|Subtract|Multiply|Divide) /.test(t)}
+  function solution(q){
+    return '<div class="sol"><b>'+esc(q.given)+'</b>'+
+      '<div><span>'+esc(q.ok[0])+':</span> <b>'+esc(q.ok[1])+'</b></div>'+
+      '<div><span>'+esc(q.ok[2])+':</span> <b>'+esc(q.ok[3])+'</b></div>'+
+      '<div><span>Check:</span> <b>'+esc(q.ok[4])+'</b></div></div>';
+  }
+
+  function load(){
+    var q=Q[S.i],n=0;
+    S.tiles=shuffle(q.ok.concat(q.d).map(function(t){return {id:'t'+(n++),text:t}}));
+    S.slots=[null,null,null,null,null];S.locked=false;
+    $('qn').textContent=S.i+1;$('qt').textContent=Q.length;$('sc').textContent=S.score;
+    $('bar').style.width=(S.i/Q.length*100)+'%';
+    $('cat').textContent=q.cat;$('given').textContent=q.given;
+    $('ctx').hidden=!q.ctx;$('ctx').textContent=q.ctx;
+    $('fb').innerHTML='';$('next').hidden=true;$('check').hidden=false;$('reset').hidden=false;
+    render();
+  }
+
+  function tileEl(t,from){
+    var b=document.createElement('button');b.type='button';b.className='tile'+(isOp(t.text)?' op':'');b.textContent=t.text;
+    b.dataset.id=t.id;b.dataset.from=from;b.setAttribute('aria-label',t.text+(from==='bank'?', tap to place':', tap to remove'));
+    return b;
+  }
+  function slotEl(i){
+    var s=document.createElement('div');s.className='slot';s.dataset.slot=i;s.dataset.ph=PH[i];
+    var id=S.slots[i];
+    if(id){s.classList.add('filled');s.appendChild(tileEl({id:id,text:tileText(id)},i))}
+    return s;
+  }
+  function labelEl(t){var l=document.createElement('span');l.className='label';l.textContent=t;return l}
+
+  function render(){
+    var w=$('work'),bank=$('bank');w.innerHTML='';bank.innerHTML='';
+    [['Step 1',[0,1]],['Step 2',[2,3]],['Check',[4]]].forEach(function(r){
+      var row=document.createElement('div');row.className='steprow'+(r[1].length===1?' one':'');
+      row.appendChild(labelEl(r[0]));r[1].forEach(function(i){row.appendChild(slotEl(i))});w.appendChild(row);
+    });
+    S.tiles.forEach(function(t){if(S.slots.indexOf(t.id)<0)bank.appendChild(tileEl(t,'bank'))});
+    $('quiz').classList.toggle('locked',S.locked);
+    $('check').disabled=S.locked||S.slots.some(function(x){return x===null});
+  }
+
+  function place(id,si){
+    var from=S.slots.indexOf(id),occ=S.slots[si];
+    S.slots[si]=id;
+    if(from>=0&&from!==si)S.slots[from]=occ;
+    render();
+  }
+  function unplace(id){var f=S.slots.indexOf(id);if(f>=0)S.slots[f]=null;render()}
+
+  document.addEventListener('pointerdown',function(e){
+    var t=e.target.closest&&e.target.closest('.tile');
+    if(!t||S.locked||$('quiz').hidden||(e.pointerType==='mouse'&&e.button!==0))return;
+    drag={id:t.dataset.id,el:t,x:e.clientX,y:e.clientY,moved:false,ghost:null};
+  });
+  document.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    if(!drag.moved){
+      if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<7)return;
+      drag.moved=true;
+      var g=drag.el.cloneNode(true);g.classList.add('ghost');
+      var r=drag.el.getBoundingClientRect();g.style.width=r.width+'px';g.style.height=r.height+'px';
+      document.body.appendChild(g);drag.ghost=g;drag.dx=r.width/2;drag.dy=r.height/2;drag.el.classList.add('dim');
+    }
+    drag.ghost.style.left=(e.clientX-drag.dx)+'px';drag.ghost.style.top=(e.clientY-drag.dy)+'px';
+    var over=document.elementFromPoint(e.clientX,e.clientY),sl=over&&over.closest('.slot');
+    document.querySelectorAll('.slot.over,.bank.over').forEach(function(n){n.classList.remove('over')});
+    if(sl)sl.classList.add('over');else if(over&&over.closest('#bank'))$('bank').classList.add('over');
+    e.preventDefault();
+  },{passive:false});
+  function endDrag(e,cancel){
+    if(!drag)return;
+    var d=drag;drag=null;
+    if(!d.moved)return;
+    d.ghost.remove();
+    document.querySelectorAll('.slot.over,.bank.over').forEach(function(n){n.classList.remove('over')});
+    suppress=true;setTimeout(function(){suppress=false},0);
+    if(cancel){render();return}
+    var over=document.elementFromPoint(e.clientX,e.clientY),sl=over&&over.closest('.slot');
+    if(sl)place(d.id,Number(sl.dataset.slot));
+    else if(over&&over.closest('#work')===null)unplace(d.id);
+    else render();
+  }
+  document.addEventListener('pointerup',function(e){endDrag(e,false)});
+  document.addEventListener('pointercancel',function(e){endDrag(e,true)});
+
+  document.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('.tile');
+    if(!t||t.classList.contains('ghost'))return;
+    if(suppress||S.locked)return;
+    if(t.dataset.from==='bank'){var f=S.slots.indexOf(null);if(f>=0)place(t.dataset.id,f)}
+    else unplace(t.dataset.id);
+  });
+
+  $('check').onclick=function(){
+    if(S.locked)return;
+    var q=Q[S.i],txt=S.slots.map(tileText),hits=txt.map(function(t,i){return t===q.ok[i]}),n=hits.filter(Boolean).length,ok=n===5;
+    S.locked=true;S.steps+=n;
+    var t=S.tally[q.cat]||(S.tally[q.cat]={c:0,n:0});t.n++;if(ok){S.score++;t.c++}
+    S.res.push({i:S.i,ok:ok,n:n});
+    $('sc').textContent=S.score;
+    $('fb').innerHTML=ok
+      ?'<div class="fb good"><h3>Correct! x = '+esc(fmt(q.x))+'</h3>'+solution(q)+'</div>'
+      :'<div class="fb bad"><h3>'+n+' of 5 boxes in the right place.</h3><div>Red slots show where something is off. Here is a correct solution:</div>'+solution(q)+'</div>';
+    $('check').hidden=true;$('reset').hidden=true;
+    $('next').textContent=S.i>=Q.length-1?'See my results':'Next problem';$('next').hidden=false;$('next').focus();
+    render();
+    document.querySelectorAll('.slot').forEach(function(s){var i=Number(s.dataset.slot);s.classList.add(hits[i]?'ok':'no')});
+  };
+  $('reset').onclick=function(){if(S.locked)return;S.slots=[null,null,null,null,null];render()};
+  $('next').onclick=function(){if(S.i>=Q.length-1){finish();return}S.i++;load()};
+
+  function finish(){
+    $('final').textContent=S.score;
+    $('verdict').textContent=S.score>=18?'Excellent. You can solve two-step equations and show every step.':S.score>=14?'Strong work. Look over the problems you missed below.':S.score>=10?'Good start. Study the missed problems and try again.':'Keep practicing. Read each solution below, then take the quiz again.';
+    $('stepsum').textContent=S.steps+' of '+(Q.length*5)+' boxes placed correctly.';
+    var rows='';Object.keys(S.tally).forEach(function(k){rows+='<tr><td>'+esc(k)+'</td><td>'+S.tally[k].c+' of '+S.tally[k].n+'</td></tr>'});
+    $('bycat').innerHTML=rows;
+    var miss=S.res.filter(function(r){return !r.ok});
+    if(!miss.length)$('missed').innerHTML='<div class="fb good"><h3>No missed problems.</h3></div>';
+    else{
+      var h='<h2 style="font-size:1.4rem;margin-bottom:8px">Review these</h2><div style="display:flex;flex-direction:column;gap:12px">';
+      miss.forEach(function(r){var q=Q[r.i];h+='<div class="card"><div class="cat">Problem '+(r.i+1)+'</div>'+(q.ctx?'<p>'+esc(q.ctx)+'</p>':'')+solution(q)+'</div>'});
+      $('missed').innerHTML=h+'</div>';
+    }
+    $('bar').style.width='100%';
+    show('end');
+  }
+  function start(){S.i=0;S.score=0;S.steps=0;S.res=[];S.tally={};show('quiz');load()}
+  $('go').onclick=start;$('again').onclick=start;
+})();
+</script>
+
+</body></html>
