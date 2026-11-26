@@ -1,0 +1,304 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Percent Builder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: single column quiz. Prompt card, then a calculation row with empty slots, then a bank of movable number boxes. */
+:root{
+  --bg:#eef0f7; --ink:#161a33; --muted:#586082; --card:#ffffff; --line:#c9cfe6;
+  --accent:#3446b0; --accent-ink:#ffffff;
+  --tile:#ffcf5c; --tile-ink:#2b2100; --tile-edge:#d7a017;
+  --good:#17753a; --good-bg:#dcf2e3; --bad:#b3301f; --bad-bg:#fbe3df;
+  --display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12152a; --ink:#e8eaf8; --muted:#a3abd0; --card:#1b2040; --line:#323a66;
+  --accent:#8e9cff; --accent-ink:#0f1330;
+  --tile:#f0b93d; --tile-ink:#241a00; --tile-edge:#a87a12;
+  --good:#6fdc93; --good-bg:#173824; --bad:#ff8f80; --bad-bg:#40201b; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#12152a; --ink:#e8eaf8; --muted:#a3abd0; --card:#1b2040; --line:#323a66;
+  --accent:#8e9cff; --accent-ink:#0f1330;
+  --tile:#f0b93d; --tile-ink:#241a00; --tile-edge:#a87a12;
+  --good:#6fdc93; --good-bg:#173824; --bad:#ff8f80; --bad-bg:#40201b; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:24px 56px}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(2.2rem,8vw,3.2rem);font-weight:800;letter-spacing:-.02em}
+p{margin:0}
+.sub{color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.badge{align-self:flex-start;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:6px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px 22px;font-weight:700;font-size:1.05rem}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top strong{font-family:var(--display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.cat{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.prompt{font-family:var(--display);font-weight:600;font-size:clamp(1.15rem,4.4vw,1.45rem);line-height:1.3;text-wrap:pretty}
+.label{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.expr{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:18px 16px;min-height:96px}
+.op{font-family:var(--display);font-weight:800;font-size:1.8rem;color:var(--muted);min-width:14px;text-align:center}
+.slot{min-width:92px;height:58px;border:3px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.slot.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.slot.filled{border-style:solid;border-color:transparent}
+.bank{display:flex;flex-wrap:wrap;gap:12px;min-height:76px;padding:14px;border:2px dashed var(--line);border-radius:14px}
+.bank.over{border-color:var(--accent)}
+.tile{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;background:var(--tile);color:var(--tile-ink);
+  border:0;border-bottom:5px solid var(--tile-edge);border-radius:10px;min-width:84px;height:54px;padding:0 16px;
+  font-family:var(--display);font-weight:800;font-size:1.35rem;font-variant-numeric:tabular-nums}
+.tile:active{cursor:grabbing}
+.tile.ghost{position:fixed;z-index:50;pointer-events:none;box-shadow:0 8px 18px rgba(0,0,0,.35);transform:rotate(-3deg)}
+.tile.dim{opacity:.35}
+.locked .tile{cursor:default}
+.slot.ok{border-color:var(--good)} .slot.no{border-color:var(--bad)}
+.fb{border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.fb.good{background:var(--good-bg);border:2px solid var(--good)} .fb.bad{background:var(--bad-bg);border:2px solid var(--bad)}
+.fb h3{font-size:1.3rem} .fb.good h3{color:var(--good)} .fb.bad h3{color:var(--bad)}
+.eq{font-family:var(--display);font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.big{font-family:var(--display);font-weight:800;font-size:clamp(3rem,14vw,5rem);line-height:1;font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.scroll{overflow-x:auto}
+</style>
+
+<div class="wrap">
+  <!-- INTRO -->
+  <section id="intro" class="wrap">
+    <span class="badge">Arkansas 7th Grade Math</span>
+    <h1>Percent Builder</h1>
+    <p>Each of the 20 questions is a percent problem set in Arkansas. Drag the number boxes into the blanks so the calculation matches the problem. The signs are already there; you choose the numbers and their order.</p>
+    <div class="card">
+      <div class="label">How it works</div>
+      <p>Drag a box into a blank, or tap a box to drop it into the next empty blank. Tap a box in the calculation to send it back. Some boxes are decoys, so you will not use all of them.</p>
+    </div>
+    <div class="row"><button class="btn" id="go">Start the quiz</button></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" class="wrap" hidden>
+    <div class="top"><span class="sub">Question <strong id="qn">1</strong> of <span id="qt">20</span></span><span class="sub">Score <strong id="sc">0</strong></span></div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="card"><div class="cat" id="cat"></div><div class="prompt" id="prompt"></div></div>
+    <div><div class="label" style="margin-bottom:6px">Your calculation</div><div class="expr" id="expr"></div></div>
+    <div><div class="label" style="margin-bottom:6px">Number boxes</div><div class="bank" id="bank"></div></div>
+    <div class="row">
+      <button class="btn" id="check" disabled>Check my calculation</button>
+      <button class="btn ghost" id="reset" type="button">Reset boxes</button>
+    </div>
+    <div id="fb" aria-live="polite"></div>
+    <div class="row"><button class="btn" id="next" hidden>Next question</button></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="end" class="wrap" hidden>
+    <span class="badge">Quiz complete</span>
+    <div class="big"><span id="final">0</span><span class="sub" style="font-size:.4em"> / 20</span></div>
+    <p id="verdict"></p>
+    <div class="scroll"><table><thead><tr><th>Skill</th><th>Correct</th></tr></thead><tbody id="bycat"></tbody></table></div>
+    <div id="missed"></div>
+    <div class="row"><button class="btn" id="again">Take it again</button></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var _='_'; // marks a blank in a template
+  var P=['_','×','_'], P3=['_','×','_','×','_'], PLUS=['_','+','_'], DIV=['_','÷','_'], CH=['(','_','−','_',')','÷','_'];
+  var Q=[
+    {c:'Discount and tax',p:'A Razorbacks cap costs $50. It is on sale for 10% off, and then 8% sales tax is added. Build the calculation for the final price.',t:P3,a:['$50','0.90','1.08'],any:1,d:['0.10','1.10','0.08','1.90'],
+     why:'Paying 90% of the price is × 0.90. Adding 8% tax is × 1.08. $50 × 0.90 × 1.08 = $48.60.'},
+    {c:'Part of a whole',p:'On a Hot Springs tour, 15% of the 80 visitors are kids. Build the calculation for the number of kids.',t:P,a:['0.15','80'],any:1,d:['15','1.15','0.85'],
+     why:'Change 15% to 0.15 and multiply by the total. 0.15 × 80 = 12 kids.'},
+    {c:'Tips and commission',p:'A family dinner in Little Rock costs $40. You want to leave a 20% tip. Build the calculation for the tip amount.',t:P,a:['$40','0.20'],any:1,d:['1.20','20','0.80'],
+     why:'The tip is 20% of the bill. $40 × 0.20 = $8.'},
+    {c:'Tips and commission',p:'The dinner costs $40 and you leave a 20% tip. Build the calculation for the total you pay, tip included.',t:P,a:['$40','1.20'],any:1,d:['0.20','0.80','$8'],
+     why:'Bill plus tip is 100% + 20% = 120%, so multiply by 1.20. $40 × 1.20 = $48.'},
+    {c:'Discount and tax',p:'A $25 shirt at a Bentonville shop has 8% sales tax. Build the calculation for the tax amount only.',t:P,a:['$25','0.08'],any:1,d:['1.08','8','0.92'],
+     why:'Tax is 8% of the price. $25 × 0.08 = $2.'},
+    {c:'Discount and tax',p:'A $60 jacket is 25% off. Build the calculation for the sale price.',t:P,a:['$60','0.75'],any:1,d:['0.25','1.25','$15'],
+     why:'25% off means you pay 75%. $60 × 0.75 = $45.'},
+    {c:'Markup and markdown',p:'A Fayetteville store buys a paddle for $20 and marks it up 40%. Build the calculation for the selling price.',t:P,a:['$20','1.40'],any:1,d:['0.40','0.60','1.04'],
+     why:'Cost plus 40% is 140% of the cost. $20 × 1.40 = $28.'},
+    {c:'Markup and markdown',p:'A shop buys a backpack for $20. The 40% markup is $8. Build the calculation for the selling price.',t:PLUS,a:['$20','$8'],any:1,d:['$12','40','0.40'],
+     why:'Selling price is cost plus markup. $20 + $8 = $28.'},
+    {c:'Markup and markdown',p:'A $80 bike at a Conway store is marked down 30%. Build the calculation for the new price.',t:P,a:['$80','0.70'],any:1,d:['0.30','1.30','$24'],
+     why:'A 30% markdown leaves 70% of the price. $80 × 0.70 = $56.'},
+    {c:'Percent change and error',p:'A season pass in Jonesboro rose from $40 to $50. Build the calculation for the percent increase.',t:CH,a:['$50','$40','$40'],d:['$90','$10'],
+     why:'Find the change (new − old), then divide by the original. ($50 − $40) ÷ $40 = 0.25, which is 25%.'},
+    {c:'Percent change and error',p:'Attendance at a Texarkana fair dropped from 200 people to 150 people. Build the calculation for the percent decrease.',t:CH,a:['200','150','200'],d:['350','50'],
+     why:'Find the change (old − new), then divide by the original. (200 − 150) ÷ 200 = 0.25, which is 25%.'},
+    {c:'Simple interest',p:'You deposit $500 in a Little Rock credit union account that pays 4% simple interest per year. Build the calculation for the interest after 3 years.',t:P3,a:['$500','0.04','3'],any:1,d:['4','1.04'],
+     why:'Interest = principal × rate × time. $500 × 0.04 × 3 = $60.'},
+    {c:'Simple interest',p:'After 3 years the account earned $60 in interest. Build the calculation for the new balance.',t:PLUS,a:['$500','$60'],any:1,d:['$440','$1,500'],
+     why:'Balance is the original deposit plus interest. $500 + $60 = $560.'},
+    {c:'Tips and commission',p:'A car salesperson in Conway earns a 3% commission. This month she sold $4,000 worth of cars. Build the calculation for her commission.',t:P,a:['$4,000','0.03'],any:1,d:['3','1.03'],
+     why:'Commission is a percent of sales. $4,000 × 0.03 = $120.'},
+    {c:'Percent change and error',p:'A student estimates a Buffalo River trail is 12 miles long. It is actually 10 miles. Build the calculation for the percent error.',t:CH,a:['12','10','10'],d:['2','22'],
+     why:'Percent error = (estimate − actual) ÷ actual. (12 − 10) ÷ 10 = 0.20, which is 20%.'},
+    {c:'Part of a whole',p:'At a Pea Ridge school, 18 students are in band. That is 30% of the 7th graders. Build the calculation for the number of 7th graders.',t:DIV,a:['18','0.30'],d:['0.70','30','1.30'],
+     why:'Part ÷ percent (as a decimal) = whole. 18 ÷ 0.30 = 60 students.'},
+    {c:'Part of a whole',p:'On a Little Rock field trip, 15 of the 60 students sit in the front of the bus. Build the calculation for the decimal that tells you what percent that is.',t:DIV,a:['15','60'],d:['0.15','45'],
+     why:'Divide the part by the whole. 15 ÷ 60 = 0.25, which is 25%.'},
+    {c:'Discount and tax',p:'A shop buys a shirt for $40, marks it up 25%, and then adds 8% sales tax. Build the calculation for the total you pay.',t:P3,a:['$40','1.25','1.08'],any:1,d:['0.25','0.08','1.33'],
+     why:'Markup is × 1.25 and tax is × 1.08. $40 × 1.25 × 1.08 = $54.'},
+    {c:'Percent change and error',p:'A video game was $80 and is now $60. Build the calculation for the percent discount.',t:CH,a:['$80','$60','$80'],d:['$20','$140'],
+     why:'Find the amount saved, then divide by the original price. ($80 − $60) ÷ $80 = 0.25, which is 25% off.'},
+    {c:'Discount and tax',p:'A $40 shirt at an Arkansas shop is 25% off, and shipping costs $6. Build the calculation for the total.',t:['(','_','×','_',')','+','_'],alts:[['$40','0.75','$6'],['0.75','$40','$6']],d:['0.25','1.25','$46'],
+     why:'Price after the discount is $40 × 0.75 = $30. Then add the $6 shipping fee: $30 + $6 = $36.'}
+  ];
+
+  var $=function(id){return document.getElementById(id)};
+  var esc=function(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})};
+  var S={i:0,score:0,tiles:[],slots:[],locked:false,res:[],tally:{}};
+  var drag=null,suppress=false;
+
+  function blanks(q){return q.t.filter(function(x){return x===_}).length}
+  function alts(q){return q.alts||[q.a]}
+  function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+  function show(id){['intro','quiz','end'].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
+  function exprText(q,toks){var k=0;return q.t.map(function(x){return x===_?toks[k++]:x}).join(' ')}
+  function tileText(id){for(var i=0;i<S.tiles.length;i++)if(S.tiles[i].id===id)return S.tiles[i].text}
+
+  function load(){
+    var q=Q[S.i],all=q.a.concat(q.d),n=0;
+    S.tiles=shuffle(all.map(function(t){return {id:'t'+(n++),text:t}}));
+    S.slots=[];for(var k=0;k<blanks(q);k++)S.slots.push(null);
+    S.locked=false;
+    $('qn').textContent=S.i+1;$('qt').textContent=Q.length;$('sc').textContent=S.score;
+    $('bar').style.width=(S.i/Q.length*100)+'%';
+    $('cat').textContent=q.c;$('prompt').textContent=q.p;
+    $('fb').innerHTML='';$('next').hidden=true;$('check').hidden=false;$('reset').hidden=false;
+    render();
+  }
+
+  function tileEl(t,from){
+    var b=document.createElement('button');b.type='button';b.className='tile';b.textContent=t.text;
+    b.dataset.id=t.id;b.dataset.from=from;b.setAttribute('aria-label',t.text+(from==='bank'?', tap to place':', tap to remove'));
+    return b;
+  }
+
+  function render(){
+    var q=Q[S.i],ex=$('expr'),bank=$('bank'),k=0;
+    ex.innerHTML='';bank.innerHTML='';
+    q.t.forEach(function(x){
+      if(x===_){
+        var idx=k++,s=document.createElement('div');s.className='slot';s.dataset.slot=idx;
+        var id=S.slots[idx];
+        if(id){s.classList.add('filled');s.appendChild(tileEl({id:id,text:tileText(id)},idx))}
+        ex.appendChild(s);
+      }else{var o=document.createElement('span');o.className='op';o.textContent=x;ex.appendChild(o)}
+    });
+    S.tiles.forEach(function(t){if(S.slots.indexOf(t.id)<0)bank.appendChild(tileEl(t,'bank'))});
+    $('quiz').classList.toggle('locked',S.locked);
+    $('check').disabled=S.locked||S.slots.some(function(x){return x===null});
+  }
+
+  function place(id,si){
+    var from=S.slots.indexOf(id),occ=S.slots[si];
+    S.slots[si]=id;
+    if(from>=0&&from!==si)S.slots[from]=occ;
+    render();
+  }
+  function unplace(id){var f=S.slots.indexOf(id);if(f>=0)S.slots[f]=null;render()}
+
+  document.addEventListener('pointerdown',function(e){
+    var t=e.target.closest&&e.target.closest('.tile');
+    if(!t||S.locked||$('quiz').hidden||(e.pointerType==='mouse'&&e.button!==0))return;
+    drag={id:t.dataset.id,el:t,x:e.clientX,y:e.clientY,moved:false,ghost:null};
+  });
+  document.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    if(!drag.moved){
+      if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<7)return;
+      drag.moved=true;
+      var g=drag.el.cloneNode(true);g.classList.add('ghost');
+      var r=drag.el.getBoundingClientRect();g.style.width=r.width+'px';g.style.height=r.height+'px';
+      document.body.appendChild(g);drag.ghost=g;drag.dx=r.width/2;drag.dy=r.height/2;drag.el.classList.add('dim');
+    }
+    drag.ghost.style.left=(e.clientX-drag.dx)+'px';drag.ghost.style.top=(e.clientY-drag.dy)+'px';
+    var over=document.elementFromPoint(e.clientX,e.clientY),sl=over&&over.closest('.slot');
+    document.querySelectorAll('.slot.over,.bank.over').forEach(function(n){n.classList.remove('over')});
+    if(sl)sl.classList.add('over');else if(over&&over.closest('#bank'))$('bank').classList.add('over');
+    e.preventDefault();
+  },{passive:false});
+  function endDrag(e,cancel){
+    if(!drag)return;
+    var d=drag;drag=null;
+    if(!d.moved)return;
+    d.ghost.remove();
+    document.querySelectorAll('.slot.over,.bank.over').forEach(function(n){n.classList.remove('over')});
+    suppress=true;setTimeout(function(){suppress=false},0);
+    if(cancel){render();return}
+    var over=document.elementFromPoint(e.clientX,e.clientY),sl=over&&over.closest('.slot');
+    if(sl)place(d.id,Number(sl.dataset.slot));
+    else if(over&&(over.closest('#bank')||over.closest('.expr')===null))unplace(d.id);
+    else render();
+  }
+  document.addEventListener('pointerup',function(e){endDrag(e,false)});
+  document.addEventListener('pointercancel',function(e){endDrag(e,true)});
+
+  document.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('.tile');
+    if(!t||t.classList.contains('ghost'))return;
+    if(suppress||S.locked)return;
+    if(t.dataset.from==='bank'){var f=S.slots.indexOf(null);if(f>=0)place(t.dataset.id,f)}
+    else unplace(t.dataset.id);
+  });
+
+  function matches(q,txt){
+    if(alts(q).some(function(a){return a.join('|')===txt.join('|')}))return true;
+    if(q.any){var A=q.a.slice().sort().join('|'),B=txt.slice().sort().join('|');return A===B}
+    return false;
+  }
+
+  $('check').onclick=function(){
+    if(S.locked)return;
+    var q=Q[S.i],txt=S.slots.map(tileText),ok=matches(q,txt);
+    S.locked=true;
+    var t=S.tally[q.c]||(S.tally[q.c]={c:0,n:0});t.n++;
+    if(ok){S.score++;t.c++}
+    S.res.push({i:S.i,ok:ok});
+    $('sc').textContent=S.score;
+    var correctEx=exprText(q,q.a);
+    $('fb').innerHTML=ok
+      ?'<div class="fb good"><h3>Correct!</h3><div class="eq">'+esc(exprText(q,txt))+'</div><div>'+esc(q.why)+'</div></div>'
+      :'<div class="fb bad"><h3>Not quite.</h3><div>Your calculation: <span class="eq">'+esc(exprText(q,txt))+'</span></div><div>A correct one: <span class="eq">'+esc(correctEx)+'</span></div><div>'+esc(q.why)+'</div></div>';
+    $('check').hidden=true;$('reset').hidden=true;
+    $('next').textContent=S.i>=Q.length-1?'See my results':'Next question';$('next').hidden=false;$('next').focus();
+    render();
+    document.querySelectorAll('.slot').forEach(function(s,idx){s.classList.add(ok?'ok':'no')});
+  };
+  $('reset').onclick=function(){if(S.locked)return;S.slots=S.slots.map(function(){return null});render()};
+  $('next').onclick=function(){if(S.i>=Q.length-1){finish();return}S.i++;load()};
+
+  function finish(){
+    $('final').textContent=S.score;
+    $('verdict').textContent=S.score>=18?'Excellent. You can set up percent problems with confidence.':S.score>=14?'Strong work. Review the ones you missed below.':S.score>=10?'Good start. Look at the missed problems and try again.':'Keep practicing. Read each explanation below, then take the quiz again.';
+    var rows='';Object.keys(S.tally).forEach(function(k){rows+='<tr><td>'+esc(k)+'</td><td>'+S.tally[k].c+' of '+S.tally[k].n+'</td></tr>'});
+    $('bycat').innerHTML=rows;
+    var miss=S.res.filter(function(r){return !r.ok});
+    if(!miss.length)$('missed').innerHTML='<div class="fb good"><h3>No missed questions.</h3></div>';
+    else{
+      var h='<h2 style="font-size:1.4rem;margin-bottom:8px">Review these</h2><div class="scroll"><table><thead><tr><th>Problem</th><th>Correct calculation</th></tr></thead><tbody>';
+      miss.forEach(function(r){var q=Q[r.i];h+='<tr><td>'+(r.i+1)+'. '+esc(q.p)+'</td><td class="eq">'+esc(exprText(q,q.a))+'</td></tr>'});
+      $('missed').innerHTML=h+'</tbody></table></div>';
+    }
+    $('bar').style.width='100%';
+    show('end');
+  }
+  $('go').onclick=function(){S.i=0;S.score=0;S.res=[];S.tally={};show('quiz');load()};
+  $('again').onclick=function(){S.i=0;S.score=0;S.res=[];S.tally={};show('quiz');load()};
+})();
+</script>
+
+</body></html>
