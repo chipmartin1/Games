@@ -1,0 +1,634 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Equivalent Invaders</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Chakra+Petch:wght@500;600;700&display=swap">
+<style>
+  /* Layout: graph-paper night sky. Question panel on top, canvas stage in the middle, thumb controls below. */
+  :root {
+    --sky: #0c1230;
+    --sky-2: #121a40;
+    --grid: rgba(150, 175, 255, 0.075);
+    --line: rgba(150, 175, 255, 0.28);
+    --chalk: #eef1ff;
+    --dim: #9aa6d6;
+    --pencil: #ffd23f;
+    --good: #52e0a1;
+    --bad: #ff6b6b;
+    --s1: #ff7a6b;
+    --s2: #ffc857;
+    --s3: #4cc9f0;
+    --s4: #b49cff;
+    --font-display: "Chakra Petch", "Trebuchet MS", sans-serif;
+    --font-body: "Atkinson Hyperlegible", "Segoe UI", Verdana, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { min-height: 100%; }
+  body {
+    background-color: var(--sky);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--chalk);
+    font: 400 16px/1.45 var(--font-body);
+    padding-block: 12px 20px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .app { max-width: 860px; margin: 0 auto; display: grid; gap: 10px; }
+  .hud { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 8px 16px; }
+  .brand { font: 700 1.05rem/1 var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--pencil); }
+  .brand small { display: block; margin-top: 4px; font: 500 0.7rem/1 var(--font-display); letter-spacing: 0.1em; color: var(--dim); }
+  .stats { display: flex; gap: 18px; align-items: end; font-variant-numeric: tabular-nums; }
+  .stat small { display: block; font: 500 0.64rem/1.2 var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+  .stat b { font: 700 1.2rem/1.1 var(--font-display); }
+  .hearts { letter-spacing: 0.12em; color: var(--bad); }
+  .hearts .lost { color: rgba(154, 166, 214, 0.35); }
+  .iconbtn { background: transparent; color: var(--dim); border: 1px solid var(--line); border-radius: 6px; font: 600 0.72rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 9px; cursor: pointer; }
+  .iconbtn:hover { color: var(--chalk); }
+
+  .prompt { background: rgba(18, 26, 64, 0.9); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+  .topic { font: 600 0.72rem/1 var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+  .qtext { margin-top: 6px; font-size: 1.02rem; }
+  .expr { margin-top: 6px; font: 700 clamp(1.35rem, 4.6vw, 1.9rem)/1.25 var(--font-body); overflow-wrap: anywhere; }
+  .hint { margin-top: 6px; min-height: 1.4em; color: var(--pencil); font-size: 0.92rem; }
+
+  .stage { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--sky-2); aspect-ratio: 800 / 520; touch-action: none; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .overlay { position: absolute; inset: 0; display: flex; padding: 14px; background: rgba(8, 12, 32, 0.9); overflow: auto; }
+  .card { margin: auto; width: 100%; max-width: 540px; }
+  .card h1, .card h2 { margin: 0 0 8px; font: 700 clamp(1.5rem, 6vw, 2.1rem)/1.05 var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; color: var(--pencil); }
+  .card p { margin: 0 0 10px; color: var(--chalk); }
+  .card .sub { color: var(--dim); font-size: 0.9rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 14px; }
+  .chip { background: transparent; color: var(--dim); border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 12px; font: 500 0.86rem var(--font-body); cursor: pointer; }
+  .chip[aria-pressed="true"] { color: #0c1230; background: var(--s3); border-color: var(--s3); font-weight: 700; }
+  .btn { background: var(--pencil); color: #17120a; border: 0; border-radius: 8px; padding: 12px 20px; font: 700 1rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+  .btn:hover { filter: brightness(1.08); }
+  :focus-visible { outline: 3px solid var(--s3); outline-offset: 2px; }
+  .keys { color: var(--dim); font-size: 0.86rem; margin: 14px 0 0; }
+  .keys + .keys { margin-top: 6px; }
+  kbd { font: 600 0.78rem var(--font-display); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; color: var(--chalk); }
+
+  .fb { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(8, 12, 32, 0.95); border-top: 2px solid var(--pencil); padding: 12px 16px 14px; display: grid; gap: 6px; }
+  .fb.good { border-top-color: var(--good); }
+  .fb.bad { border-top-color: var(--bad); }
+  .fb h3 { margin: 0; font: 700 1.15rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+  .fb.good h3 { color: var(--good); }
+  .fb.bad h3 { color: var(--bad); }
+  .fb .ans, .fb .why { margin: 0; overflow-wrap: anywhere; }
+  .fb .why { color: var(--dim); }
+  .fb .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+  .summary { display: flex; flex-wrap: wrap; gap: 18px; margin: 6px 0 12px; }
+  .review { max-height: 220px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px; margin-bottom: 14px; }
+  .review h4 { margin: 10px 0 0; font: 600 0.72rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+  .review ul { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  .review li { padding-bottom: 10px; border-bottom: 1px dashed var(--line); overflow-wrap: anywhere; }
+  .review li:last-child { border-bottom: 0; }
+  .review .a { color: var(--good); font-weight: 700; }
+  .review .w { color: var(--dim); font-size: 0.9rem; }
+
+  .controls { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 10px; }
+  .pad { min-height: 58px; border-radius: 10px; border: 1.5px solid var(--line); background: rgba(18, 26, 64, 0.9); color: var(--chalk); font: 700 1rem var(--font-display); letter-spacing: 0.1em; touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
+  .pad.fire { background: var(--pencil); color: #17120a; border-color: var(--pencil); }
+  .pad:active { filter: brightness(1.25); }
+  .foot { text-align: center; color: var(--dim); font-size: 0.82rem; }
+  @media (hover: hover) and (pointer: fine) { .controls { display: none; } }
+  @media (hover: none), (pointer: coarse) { .foot { display: none; } }
+</style>
+
+<main class="app">
+  <header class="hud">
+    <div class="brand">Equivalent Invaders<small>7th grade Algebra &middot; equivalent linear expressions</small></div>
+    <div class="stats">
+      <div class="stat"><small>Score</small><b id="score">0</b></div>
+      <div class="stat"><small>Question</small><b id="qn">0/10</b></div>
+      <div class="stat"><small>Lives</small><b class="hearts" id="lives" aria-label="Lives">&#9829;&#9829;&#9829;</b></div>
+      <button class="iconbtn" id="mute" type="button" aria-pressed="false">Sound on</button>
+    </div>
+  </header>
+
+  <section class="prompt" aria-live="polite">
+    <div class="topic" id="topic">Ready</div>
+    <div class="qtext" id="qtext">Choose your topics, then press Start.</div>
+    <div class="expr" id="expr"></div>
+    <div class="hint" id="hint"></div>
+  </section>
+
+  <div class="stage" id="stage">
+    <canvas id="c" aria-label="Game field. Each invader carries an expression. Move the ship and shoot the equivalent ones."></canvas>
+
+    <div class="overlay" id="menu">
+      <div class="card">
+        <h1>Equivalent Invaders</h1>
+        <p>Every invader carries an expression. Shoot the one that is <b>equivalent</b> to the expression in the question. A wrong shot costs a life, and if the invaders reach your ship you lose one too.</p>
+        <p class="sub">Some questions ask for two correct answers. Shoot both.</p>
+        <div class="chips" id="chips" role="group" aria-label="Topics"></div>
+        <button class="btn" id="start" type="button">Start</button>
+        <p class="keys">Move: <kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>A</kbd> <kbd>D</kbd> &nbsp; Fire: <kbd>Space</kbd>. On a phone, drag on the field or use the buttons.</p>
+        <p class="keys" id="best"></p>
+      </div>
+    </div>
+
+    <div class="fb" id="fb" hidden>
+      <h3 id="fbTitle"></h3>
+      <p class="ans" id="fbAns"></p>
+      <p class="why" id="fbWhy"></p>
+      <div class="row"><span class="sub" id="fbNote"></span><button class="btn" id="next" type="button">Next question</button></div>
+    </div>
+
+    <div class="overlay" id="end" hidden>
+      <div class="card">
+        <h2 id="endTitle">Mission complete</h2>
+        <div class="summary">
+          <div class="stat"><small>Score</small><b id="eScore">0</b></div>
+          <div class="stat"><small>Right the first time</small><b id="eAcc">0/0</b></div>
+          <div class="stat"><small>Best</small><b id="eBest">0</b></div>
+        </div>
+        <div class="review" id="review"></div>
+        <button class="btn" id="again" type="button">Play again</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls" aria-label="Touch controls">
+    <button class="pad" id="padL" type="button" aria-label="Move left">&#9664; LEFT</button>
+    <button class="pad fire" id="padF" type="button" aria-label="Fire">FIRE</button>
+    <button class="pad" id="padR" type="button" aria-label="Move right">RIGHT &#9654;</button>
+  </div>
+  <div class="foot">Arrow keys or A / D to move, Space to fire.</div>
+</main>
+
+<script>
+/*GEN*/
+const FR = { '½': 0.5, '¼': 0.25, '¾': 0.75 };
+const M = '−';
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const pick = a => a[rnd(0, a.length - 1)];
+const sgn = () => (Math.random() < 0.5 ? -1 : 1);
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); return b ? gcd(b, a % b) : a; }
+function num(n) {
+  const s = Math.abs(n), w = Math.floor(s + 1e-9), f = s - w;
+  const fr = Math.abs(f - 0.5) < 1e-9 ? '½' : Math.abs(f - 0.25) < 1e-9 ? '¼' : Math.abs(f - 0.75) < 1e-9 ? '¾' : '';
+  if (fr) return (w ? String(w) : '') + fr;
+  return String(Math.round(s));
+}
+// a*v + b, optionally constant first
+function lin(a, b, v, cf) {
+  const A = Math.abs(a), B = Math.abs(b);
+  const ta = (A === 1 ? '' : num(A)) + v, tb = num(B);
+  if (a === 0) return (b < 0 ? M : '') + tb;
+  if (b === 0) return (a < 0 ? M : '') + ta;
+  if (cf) return (b < 0 ? M : '') + tb + ' ' + (a < 0 ? M : '+') + ' ' + ta;
+  return (a < 0 ? M : '') + ta + ' ' + (b < 0 ? M : '+') + ' ' + tb;
+}
+const trm = (c, v) => ({ neg: c < 0, body: (Math.abs(c) === 1 ? '' : num(c)) + v });
+const cst = d => ({ neg: d < 0, body: num(d) });
+const grp = (k, inner) => ({ neg: k < 0, body: (Math.abs(k) === 1 ? '' : num(k)) + '(' + inner + ')' });
+function join(items) { return items.map((it, i) => i === 0 ? (it.neg ? M : '') + it.body : ' ' + (it.neg ? M : '+') + ' ' + it.body).join(''); }
+const key = e => e.a + '|' + e.b;
+const same = (x, y) => Math.abs(x.a - y.a) < 1e-9 && Math.abs(x.b - y.b) < 1e-9;
+const VARS = ['x', 'y', 'n', 'a', 'm', 't', 'p'];
+
+// target {a,b}; errs = likely student mistakes as {a,b}. Returns 1 correct + 3 wrong linear options.
+function linOpts(t, errs, v, cf) {
+  const seen = new Set([key(t)]), out = [];
+  const add = e => { if (e.a === 0) return; const k = key(e); if (seen.has(k)) return; seen.add(k); out.push(e); };
+  shuffle(errs).forEach(e => { if (out.length < 3) add(e); });
+  shuffle([{ a: t.a, b: -t.b }, { a: -t.a, b: t.b }, { a: t.a + 1, b: t.b }, { a: t.a - 1, b: t.b }, { a: t.a, b: t.b + 1 }, { a: t.a, b: t.b - 1 }, { a: t.a + 2, b: t.b }, { a: t.a, b: t.b + 2 }, { a: t.b, b: t.a }, { a: -t.a, b: -t.b }])
+    .forEach(e => { if (out.length < 3) add(e); });
+  return [{ text: lin(t.a, t.b, v, cf), ok: true }, ...out.map(e => ({ text: lin(e.a, e.b, v, cf), ok: false }))];
+}
+
+function qA() {
+  const v = pick(VARS); let p, q, c, d, a, b;
+  do { p = sgn() * rnd(1, 6); q = pick([-4, -3, -2, 2, 3, 4, 5]); c = sgn() * rnd(1, 5); d = sgn() * rnd(1, 6); a = p + q * c; b = q * d; }
+  while (a === 0 || b === 0 || Math.abs(a) > 18);
+  const cf = Math.random() < 0.6;
+  const expr = join([trm(p, v), grp(q, lin(c, d, v, cf))]);
+  const dist = cf ? [cst(q * d), trm(q * c, v)] : [trm(q * c, v), cst(q * d)];
+  return {
+    topic: 'Distribute and combine', prompt: 'Which expression is equivalent to this one?', expr, ref: expr, v,
+    options: linOpts({ a, b }, [{ a: p + q * c, b: d }, { a: p - q * c, b: q * d }, { a: p + c, b: q * d }, { a: p + q * c, b: -q * d }], v, true),
+    explain: `${expr} = ${join([trm(p, v), ...dist])} = ${lin(a, b, v, true)}`
+  };
+}
+function qB() {
+  const v = pick(VARS); let k1, k2, c1, c2, d1, d2, a, b;
+  do { k1 = pick([2, 3, 4, 5, 6]); k2 = pick([-5, -4, -3, -2, 2, 3]); c1 = sgn() * rnd(1, 3); c2 = sgn() * rnd(1, 3); d1 = sgn() * rnd(1, 8); d2 = sgn() * rnd(1, 8); a = k1 * c1 + k2 * c2; b = k1 * d1 + k2 * d2; }
+  while (a === 0 || b === 0 || Math.abs(a) > 20 || Math.abs(b) > 40);
+  const expr = join([grp(k1, lin(c1, d1, v)), grp(k2, lin(c2, d2, v))]);
+  return {
+    topic: 'Distribute and combine', prompt: 'Which expression is equivalent to this one?', expr, ref: expr, v,
+    options: linOpts({ a, b }, [{ a, b: k1 * d1 - k2 * d2 }, { a: k1 * c1 - k2 * c2, b }, { a, b: k1 * d1 + (k2 < 0 ? -d2 : d2) }, { a: k1 * c1 + (k2 < 0 ? -c2 : c2), b }], v, false),
+    explain: `${expr} = ${join([trm(k1 * c1, v), cst(k1 * d1), trm(k2 * c2, v), cst(k2 * d2)])} = ${lin(a, b, v)}`
+  };
+}
+function qC() {
+  const v = pick(VARS); let c1, c2, k, c, d, a, b;
+  do { c1 = sgn() * pick([0.25, 0.5, 0.75, 1.25, 1.5, 2.25]); c2 = sgn() * pick([0.25, 0.75, 1.25, 1.5, 2.25, 3.25]); k = pick([0.5, -0.5]); c = sgn() * pick([2, 4, 6]); d = sgn() * pick([2, 4, 6, 8]); a = c1 + c2 + k * c; b = k * d; }
+  while (a === 0 || b === 0 || Math.abs(a) > 9);
+  const expr = join([trm(c1, v), trm(c2, v), grp(k, lin(c, d, v, true))]);
+  return {
+    topic: 'Fractions', prompt: 'Which expression is equivalent to this one?', expr, ref: expr, v,
+    options: linOpts({ a, b }, [{ a: c1 + c2 + c, b: k * d }, { a: c1 + c2 + k * c, b: d }, { a: c1 + c2 - k * c, b: k * d }, { a: c1 + c2 + k * c, b: -k * d }], v, true),
+    explain: `${expr} = ${join([trm(c1, v), trm(c2, v), cst(k * d), trm(k * c, v)])} = ${lin(a, b, v, true)}`
+  };
+}
+function qD() {
+  const v = pick(VARS); let g, m, n;
+  do { g = rnd(2, 12); m = rnd(1, 6); n = (Math.random() < 0.25 ? -1 : 1) * rnd(1, 9); } while (gcd(m, n) !== 1 || (m === 1 && Math.abs(n) === 1));
+  const A = g * m, B = g * n, expr = lin(A, B, v);
+  const cands = [[g, m, g * n], [m, g, n], [n, m, g], [g, n, m], [g + 1, m, n], [g, m, n + 1], [g, m + 1, n], [g - 1, m, n]];
+  const seen = new Set(), wrong = [];
+  shuffle(cands).forEach(([k, c, d]) => {
+    if (k <= 1 || wrong.length >= 3) return;
+    if (k * c === A && k * d === B) return;
+    const text = `${k}(${lin(c, d, v)})`;
+    if (seen.has(text)) return; seen.add(text); wrong.push({ text, ok: false });
+  });
+  return {
+    topic: 'Factoring', prompt: 'Use factoring. Which expression is equivalent to this one?', expr, ref: expr, v,
+    options: [{ text: `${g}(${lin(m, n, v)})`, ok: true }, ...wrong],
+    explain: `${expr} = ${g}(${lin(m, n, v)}). The greatest common factor of ${A} and ${Math.abs(B)} is ${g}.`
+  };
+}
+function qE() {
+  const v = pick(VARS), N = pick([6, 8, 10, 12]);
+  const it = pick([['pencils', 'pencil'], ['granola bars', 'granola bar'], ['notebooks', 'notebook'], ['eggs', 'egg']]);
+  const m = rnd(1, 5), n = rnd(1, 9), expr = lin(N * m, N * n, v);
+  return {
+    topic: 'Factoring', prompt: `A pack of ${N} ${it[0]} costs the expression below, in dollars. Which expression gives the cost of one ${it[1]}?`, expr, ref: `(${expr})/${N}`, v,
+    options: linOpts({ a: m, b: n }, [{ a: N * m, b: n }, { a: m, b: N * n }, { a: N * m, b: N * n }], v, false),
+    explain: `${expr} = ${N}(${lin(m, n, v)}), so one ${it[1]} costs ${lin(m, n, v)}.`
+  };
+}
+function pickTwoWrong(target, cands) {
+  const seen = new Set(), out = [];
+  shuffle(cands).forEach(c => { if (out.length >= 2 || same(c, target) || seen.has(c.text)) return; seen.add(c.text); out.push({ text: c.text, ok: false }); });
+  return out;
+}
+function qF() {
+  const v = pick(['d', 'd', 'x', 'y', 'n', 's']), P = pick([['triangle', 3], ['square', 4], ['pentagon', 5], ['hexagon', 6], ['octagon', 8]]);
+  const n = P[1], c = rnd(2, 5), d = sgn() * rnd(1, 9), side = lin(c, d, v), T = { a: n * c, b: n * d };
+  const wrong = pickTwoWrong(T, [
+    { text: lin(n * c, d, v), a: n * c, b: d }, { text: lin(c, n * d, v), a: c, b: n * d },
+    { text: `${n + 1}(${side})`, a: (n + 1) * c, b: (n + 1) * d }, { text: lin(c + n, d, v), a: c + n, b: d }]);
+  return {
+    topic: 'Perimeter', prompt: `The side length of a regular ${P[0]} is shown below, in feet. Select ALL expressions that give its perimeter.`, expr: side, ref: `${n}*(${side})`, v,
+    options: [{ text: `${n}(${side})`, ok: true }, { text: lin(n * c, n * d, v), ok: true }, ...wrong],
+    explain: `A ${P[0]} has ${n} equal sides, so P = ${n}(${side}) = ${lin(n * c, n * d, v)}.`
+  };
+}
+function qG() {
+  const v = pick(['y', 'x', 'n', 'w']), c = rnd(1, 4), d = rnd(1, 9), m = pick([2, 3]), K = 2 * (1 + m);
+  const w = lin(c, d, v, true), T = { a: K * c, b: K * d };
+  const wrong = pickTwoWrong(T, [
+    { text: `${2 * m}(${w})`, a: 2 * m * c, b: 2 * m * d }, { text: `${1 + m}(${w})`, a: (1 + m) * c, b: (1 + m) * d },
+    { text: lin(K * c, d, v, true), a: K * c, b: d }, { text: lin(K * c, m * d, v, true), a: K * c, b: m * d }]);
+  return {
+    topic: 'Perimeter', prompt: `The width of a rectangle is shown below. The length is ${m === 2 ? 'twice' : 'three times'} as long as the width. Select ALL expressions that give the perimeter.`, expr: w, ref: `2*(${w})+2*${m}*(${w})`, v,
+    options: [{ text: `${K}(${w})`, ok: true }, { text: lin(K * c, K * d, v, true), ok: true }, ...wrong],
+    explain: `P = 2(${w}) + 2(${m}(${w})) = ${K}(${w}) = ${lin(K * c, K * d, v, true)}.`
+  };
+}
+function qH() {
+  const v = pick(['a', 'x', 'n', 'y', 't']); let k1, k2, k3, c1, c2, c3, d1, d2, d3, La, Lb, Ra, Rb, a, b;
+  do {
+    k1 = pick([2, 3, 4, 5]); k2 = pick([-4, -3, -2, 2, 3]); k3 = pick([2, 3, 4]);
+    c1 = sgn() * rnd(1, 4); c2 = sgn() * rnd(1, 4); c3 = rnd(1, 3); d1 = sgn() * rnd(1, 5); d2 = sgn() * rnd(1, 5); d3 = rnd(1, 5);
+    La = k1 * c1 + k2 * c2; Lb = k1 * d1 + k2 * d2; Ra = k3 * c3; Rb = k3 * d3; a = La - Ra; b = Lb - Rb;
+  } while (La === 0 || Lb === 0 || a === 0 || b === 0 || Math.abs(a) > 20 || Math.abs(b) > 30);
+  const L = join([grp(k1, lin(c1, d1, v)), grp(k2, lin(c2, d2, v))]), g3 = `${k3}(${lin(c3, d3, v)})`;
+  return {
+    topic: 'Solve for v', prompt: 'Which expression is equivalent to v in this equation?', expr: `${L} = ${g3} + v`, ref: `(${L})-(${g3})`, v,
+    options: linOpts({ a, b }, [{ a: La + Ra, b: Lb + Rb }, { a, b: Lb + Rb }, { a: La + Ra, b }, { a: Ra - La, b: Rb - Lb }], v, false),
+    explain: `v = (${L}) ${M} ${g3} = (${lin(La, Lb, v)}) ${M} (${lin(Ra, Rb, v)}) = ${lin(a, b, v)}`
+  };
+}
+function qI() {
+  const v = pick(VARS), truth = Math.random() < 0.5, T = rnd(1, 4); let L, R, La, Lb, Ra, Rb;
+  if (T === 1) {
+    const k = rnd(2, 6), c = sgn() * rnd(1, 5), d = sgn() * rnd(1, 7);
+    L = `${k}(${lin(c, d, v)})`; La = k * c; Lb = k * d;
+    if (truth) { Ra = La; Rb = Lb; } else { [Ra, Rb] = pick([[k * c, d], [c, k * d]]); }
+    R = lin(Ra, Rb, v);
+  } else if (T === 2) {
+    const c = sgn() * rnd(1, 6), d = sgn() * rnd(1, 9);
+    L = lin(c, d, v); La = c; Lb = d;
+    if (truth) { Ra = c; Rb = d; } else { Ra = c; Rb = -d; }
+    R = lin(Ra, Rb, v, true);
+  } else if (T === 3) {
+    let p, q; do { p = sgn() * rnd(1, 6); q = sgn() * rnd(1, 6); } while (p + q === 0 || p === q || p - q === 0);
+    L = join([trm(p, v), trm(q, v)]); La = p + q; Lb = 0;
+    if (truth) Ra = p + q; else Ra = pick([p - q, p * q, p + q + 1].filter(x => x !== p + q && x !== 0));
+    Rb = 0; R = lin(Ra, 0, v);
+  } else {
+    const c = sgn() * rnd(1, 6), d = sgn() * rnd(1, 8);
+    L = `${M}(${lin(c, d, v)})`; La = -c; Lb = -d;
+    if (truth) { Ra = -c; Rb = -d; } else { Ra = -c; Rb = d; }
+    R = lin(Ra, Rb, v);
+  }
+  return {
+    tf: true, topic: 'True or false', prompt: 'True or false: are the two sides equivalent expressions?', expr: `${L}  =  ${R}`, pair: [L, R], v,
+    options: [{ text: 'TRUE', ok: truth }, { text: 'FALSE', ok: !truth }],
+    explain: truth ? `Both sides simplify to ${lin(La, Lb, v)}.` : `The left side simplifies to ${lin(La, Lb, v)}, but the right side is ${R}.`
+  };
+}
+const TOPICS = {
+  distribute: { label: 'Distribute & combine', gens: [qA, qB] },
+  fractions: { label: 'Fractions', gens: [qC] },
+  factor: { label: 'Factoring', gens: [qD, qE] },
+  perimeter: { label: 'Perimeter', gens: [qF, qG] },
+  match: { label: 'Solve for v', gens: [qH] },
+  truefalse: { label: 'True or false', gens: [qI] }
+};
+function buildQuestions(keys, n) {
+  const gens = keys.flatMap(k => TOPICS[k].gens), out = [], seen = new Set(); let last = null, guard = 0;
+  while (out.length < n && guard++ < 500) {
+    const g = pick(gens); if (gens.length > 1 && g === last) continue;
+    const q = g(), id = q.prompt + '|' + (q.expr || ''); if (seen.has(id)) continue;
+    seen.add(id); last = g; out.push(q);
+  }
+  return out;
+}
+/*ENDGEN*/
+
+(function () {
+  const $ = id => document.getElementById(id);
+  const canvas = $('c'), ctx = canvas.getContext('2d'), stage = $('stage');
+  const TOTAL = 10;
+  const SLOT = ['#ff7a6b', '#ffc857', '#4cc9f0', '#b49cff'];
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+  // Original alien sprite, two leg frames.
+  const BODY = ['..1......1..', '...1....1...', '..11111111..', '.1111111111.', '111111111111', '1.11111111.1', '1.1......1.1', '...11..11...'];
+  const LEGS_B = ['..1......1..', '.11......11.'];
+  const SHIP = ['.....1.....', '....111....', '...11111...', '.111111111.', '11111111111'];
+
+  let W = 800, H = 520, cols = 4, rows = 1, IW = 150, IH = 78, SX = 172, RH = 96, bboxW = 0, bboxH = 0, SHIPV = 380;
+  let state = 'menu', G = null, Q = null, inv = [], bullets = [], parts = [], stars = [], shake = 0, tAnim = 0;
+  const ship = { x: 400, cd: 0 }, form = { x: 0, y: 0, dir: 1, minX: 0, maxX: 0 };
+  const keys = { l: false, r: false, f: false };
+  const selected = new Set(Object.keys(TOPICS));
+  let muted = false, ac = null, best = 0;
+  try { best = +localStorage.getItem('eqinv-best') || 0; } catch (e) { }
+
+  /* ---------- sound ---------- */
+  function tone(f, d, type, vol, slide) {
+    if (muted) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+      o.type = type || 'square'; o.frequency.setValueAtTime(f, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+      g.gain.setValueAtTime(vol || 0.05, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d);
+    } catch (e) { }
+  }
+  const sfx = {
+    shoot: () => tone(880, 0.09, 'square', 0.03, 440),
+    good: () => { tone(523, 0.1, 'triangle', 0.07); setTimeout(() => tone(784, 0.16, 'triangle', 0.07), 90); },
+    bad: () => tone(160, 0.3, 'sawtooth', 0.06, 70),
+    win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.14, 'triangle', 0.07), i * 90))
+  };
+
+  /* ---------- layout ---------- */
+  function layout(nOpts) {
+    const narrow = stage.parentElement.clientWidth < 560;
+    W = narrow ? 480 : 800; H = narrow ? 620 : 520;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    stage.style.aspectRatio = W + ' / ' + H;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cols = nOpts === 2 ? 2 : (narrow ? 2 : 4); rows = Math.ceil(nOpts / cols);
+    IW = narrow ? 176 : 150; IH = 78; RH = 96;
+    SX = narrow ? 200 : (nOpts === 2 ? 300 : 172);
+    bboxW = (cols - 1) * SX + IW; bboxH = (rows - 1) * RH + IH;
+    form.minX = 12; form.maxX = W - 12 - bboxW; SHIPV = narrow ? 330 : 380;
+    stars = Array.from({ length: 60 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.4 + 0.4, p: Math.random() * 6 }));
+  }
+
+  // Size the field so the whole thing, ship included, fits the screen height (Chromebooks are often 600-700px tall).
+  function fit() {
+    const app = stage.parentElement, ar = W / H;
+    stage.style.width = '100%'; stage.style.margin = '0 auto';
+    const top = stage.getBoundingClientRect().top + window.scrollY;
+    let below = 0;
+    [...app.children].forEach(c => { if ((stage.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING) && getComputedStyle(c).display !== 'none') below += c.offsetHeight + 10; });
+    const avail = window.innerHeight - top - below - 24;
+    stage.style.width = clamp(avail * ar, 300, app.clientWidth) + 'px';
+  }
+  addEventListener('resize', () => { fit(); });
+
+  /* ---------- UI helpers ---------- */
+  function hud() {
+    $('score').textContent = G ? G.score : 0;
+    $('qn').textContent = G ? Math.min(G.qi + 1, G.total) + '/' + G.total : '0/' + TOTAL;
+    const l = G ? G.lives : 3;
+    $('lives').innerHTML = [0, 1, 2].map(i => `<span class="${i < l ? '' : 'lost'}">&#9829;</span>`).join('');
+  }
+  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function say(msg) { $('hint').textContent = msg; }
+  function answers(q) { return q.options.filter(o => o.ok).map(o => o.text).join('   and   '); }
+
+  /* ---------- flow ---------- */
+  function startGame() {
+    const topics = [...selected];
+    const qs = buildQuestions(topics, TOTAL);
+    G = { score: 0, lives: 3, qi: 0, streak: 0, qs, total: qs.length, log: [], clean: 0 };
+    $('menu').hidden = true; $('end').hidden = true; $('fb').hidden = true;
+    loadQ();
+  }
+  function loadQ() {
+    Q = G.qs[G.qi]; Q.opts = Q.tf ? Q.options : shuffle(Q.options);
+    Q.hits = 0; Q.mistakes = 0; Q.needed = Q.options.filter(o => o.ok).length;
+    layout(Q.opts.length);
+    inv = Q.opts.map((o, i) => ({ o, col: i % cols, row: Math.floor(i / cols), alive: true, flash: 0,
+      color: Q.tf ? (o.text === 'TRUE' ? SLOT[2] : SLOT[0]) : SLOT[i % 4] }));
+    form.y = 24; form.dir = 1; form.x = (W - bboxW) / 2;
+    bullets = []; parts = []; ship.x = W / 2; ship.cd = 0; shake = 0;
+    $('topic').textContent = Q.topic;
+    $('qtext').textContent = Q.prompt;
+    $('expr').textContent = Q.expr || '';
+    say(Q.needed > 1 ? `Shoot all ${Q.needed} equivalent expressions.` : (Q.tf ? 'Shoot TRUE or FALSE.' : 'Shoot the equivalent expression.'));
+    $('fb').hidden = true; state = 'play'; hud(); fit();
+  }
+  function finish(success, why) {
+    state = 'between'; bullets = [];
+    const clean = success && Q.mistakes === 0; if (clean) G.clean++;
+    G.log.push({ q: Q, clean });
+    const fb = $('fb'); fb.className = 'fb ' + (success ? 'good' : 'bad');
+    $('fbTitle').textContent = success ? (clean ? 'Correct!' : 'Got it, after a slip') : (why === 'out' ? 'Out of lives' : 'They landed');
+    $('fbAns').textContent = 'Equivalent: ' + answers(Q);
+    $('fbWhy').textContent = Q.explain;
+    $('fbNote').textContent = G.streak > 1 ? 'Streak ' + G.streak : '';
+    const last = G.lives <= 0 || G.qi + 1 >= G.total;
+    $('next').textContent = last ? 'See results' : 'Next question';
+    fb.hidden = false; $('next').focus({ preventScroll: true });
+    if (success) sfx.good();
+    hud();
+  }
+  function next() {
+    if (state !== 'between') return;
+    if (G.lives <= 0 || G.qi + 1 >= G.total) return endGame();
+    G.qi++; loadQ();
+  }
+  function endGame() {
+    state = 'over'; $('fb').hidden = true;
+    const won = G.lives > 0;
+    if (G.score > best) { best = G.score; try { localStorage.setItem('eqinv-best', String(best)); } catch (e) { } }
+    $('endTitle').textContent = won ? 'Mission complete' : 'Game over';
+    $('eScore').textContent = G.score; $('eAcc').textContent = G.clean + '/' + G.log.length; $('eBest').textContent = best;
+    const rv = $('review'); rv.textContent = '';
+    const missed = G.log.filter(l => !l.clean);
+    if (!missed.length) { rv.append(el('h4', null, 'No misses'), el('p', null, 'Every question was right the first time.')); }
+    else {
+      rv.append(el('h4', null, 'Review: worth another look'));
+      const ul = el('ul');
+      missed.forEach(({ q }) => {
+        const li = el('li');
+        li.append(el('div', 'w', q.prompt), el('div', null, q.expr || ''), el('div', 'a', 'Equivalent: ' + answers(q)), el('div', 'w', q.explain));
+        ul.append(li);
+      });
+      rv.append(ul);
+    }
+    $('end').hidden = false; if (won) sfx.win(); $('again').focus({ preventScroll: true });
+  }
+  function toMenu() { state = 'menu'; $('end').hidden = true; $('menu').hidden = false; $('best').textContent = best ? 'Best score: ' + best : ''; $('start').focus({ preventScroll: true }); }
+
+  /* ---------- play ---------- */
+  const pos = v => ({ x: form.x + v.col * SX, y: form.y + v.row * RH });
+  function fire() { if (state !== 'play' || ship.cd > 0) return; ship.cd = 0.3; bullets.push({ x: ship.x, y: H - 74 }); sfx.shoot(); }
+  function boom(x, y, color, n) {
+    for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = 40 + Math.random() * 180; parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.6 + Math.random() * 0.4, t: 0, c: color }); }
+  }
+  function hit(v) {
+    const p = pos(v); v.alive = false; boom(p.x + IW / 2, p.y + 24, v.o.ok ? v.color : '#ff6b6b', 26);
+    if (v.o.ok) {
+      Q.hits++; G.streak++;
+      const room = H - 96 - bboxH - 24, bonus = Math.round(clamp(1 - (form.y - 24) / room, 0, 1) * 100);
+      G.score += 100 + bonus + Math.min(G.streak, 5) * 10; sfx.good(); hud();
+      if (Q.hits >= Q.needed) finish(true); else say(`Nice. ${Q.needed - Q.hits} more to go.`);
+    } else {
+      G.lives--; G.streak = 0; Q.mistakes++; sfx.bad(); if (!reduce) shake = 0.3; hud();
+      say(`${v.o.text} is not equivalent. Try again.`);
+      if (G.lives <= 0) finish(false, 'out');
+    }
+  }
+  function update(dt) {
+    tAnim += dt;
+    parts.forEach(p => { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 220 * dt; });
+    parts = parts.filter(p => p.t < p.life);
+    if (shake > 0) shake -= dt;
+    if (state !== 'play') return;
+    ship.cd -= dt;
+    ship.x = clamp(ship.x + ((keys.r ? 1 : 0) - (keys.l ? 1 : 0)) * SHIPV * dt, 28, W - 28);
+    if (keys.f) fire();
+    const s = 1 + G.qi * 0.07;
+    form.x += form.dir * 34 * s * dt;
+    if (form.x <= form.minX) { form.x = form.minX; form.dir = 1; form.y += 10; }
+    else if (form.x >= form.maxX) { form.x = form.maxX; form.dir = -1; form.y += 10; }
+    form.y += 5 * s * dt;
+    for (const b of bullets) {
+      b.y -= 640 * dt;
+      for (const v of inv) {
+        if (!v.alive || b.dead) continue;
+        const p = pos(v);
+        if (b.x > p.x && b.x < p.x + IW && b.y < p.y + IH && b.y + 12 > p.y) { b.dead = true; hit(v); if (state !== 'play') return; }
+      }
+    }
+    bullets = bullets.filter(b => !b.dead && b.y > -20);
+    if (form.y + bboxH >= H - 96) { G.lives--; G.streak = 0; sfx.bad(); finish(false, 'breach'); }
+  }
+
+  /* ---------- drawing ---------- */
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function sprite(rowsArr, x, y, px, color) { ctx.fillStyle = color; rowsArr.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] === '1') ctx.fillRect(x + i * px, y + j * px, px, px); }); }
+  function drawInvader(v) {
+    const p = pos(v), px = 5, sw = 12 * px, sx = p.x + (IW - sw) / 2, frame = Math.floor(tAnim * 2) % 2;
+    const rowsToDraw = frame ? [...BODY.slice(0, 6), LEGS_B[0], LEGS_B[1]] : BODY;
+    sprite(rowsToDraw, sx, p.y, px, v.color);
+    ctx.fillStyle = '#0c1230'; ctx.fillRect(sx + 3 * px, p.y + 3 * px, px * 2, px * 2); ctx.fillRect(sx + 7 * px, p.y + 3 * px, px * 2, px * 2);
+    const py = p.y + 8 * px + 4;
+    rr(p.x, py, IW, 32, 8); ctx.fillStyle = 'rgba(10,16,40,0.92)'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = v.color; ctx.stroke();
+    let size = 22; const label = v.o.text;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#eef1ff';
+    do { ctx.font = `700 ${size}px "Atkinson Hyperlegible", "Segoe UI", sans-serif`; size--; } while (ctx.measureText(label).width > IW - 14 && size > 10);
+    ctx.fillText(label, p.x + IW / 2, py + 17);
+  }
+  function draw() {
+    ctx.save();
+    if (shake > 0 && !reduce) ctx.translate((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8);
+    ctx.fillStyle = '#121a40'; ctx.fillRect(-10, -10, W + 20, H + 20);
+    ctx.strokeStyle = 'rgba(150,175,255,0.07)'; ctx.lineWidth = 1; ctx.beginPath();
+    for (let x = 0; x <= W; x += 40) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, H); }
+    for (let y = 0; y <= H; y += 40) { ctx.moveTo(0, y + 0.5); ctx.lineTo(W, y + 0.5); }
+    ctx.stroke();
+    stars.forEach(s => { ctx.globalAlpha = reduce ? 0.5 : 0.35 + 0.35 * Math.sin(tAnim * 1.5 + s.p); ctx.fillStyle = '#dfe6ff'; ctx.fillRect(s.x, s.y, s.r, s.r); });
+    ctx.globalAlpha = 1;
+    // danger line
+    ctx.setLineDash([6, 8]); ctx.strokeStyle = 'rgba(255,107,107,0.35)'; ctx.beginPath(); ctx.moveTo(0, H - 96); ctx.lineTo(W, H - 96); ctx.stroke(); ctx.setLineDash([]);
+    if (state === 'play') inv.forEach(v => { if (v.alive) drawInvader(v); });
+    ctx.fillStyle = '#eef1ff'; bullets.forEach(b => ctx.fillRect(b.x - 1.5, b.y, 3, 12));
+    if (state === 'play' || state === 'between') sprite(SHIP, ship.x - 22, H - 62, 4, '#ffd23f');
+    parts.forEach(p => { ctx.globalAlpha = clamp(1 - p.t / p.life, 0, 1); ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 4, 4); });
+    ctx.globalAlpha = 1; ctx.restore();
+  }
+  let last = performance.now();
+  function loop(t) { const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt); draw(); requestAnimationFrame(loop); }
+
+  /* ---------- input ---------- */
+  addEventListener('keydown', e => {
+    const k = e.key;
+    if (k === 'ArrowLeft' || k === 'a' || k === 'A') { keys.l = true; if (state === 'play') e.preventDefault(); }
+    else if (k === 'ArrowRight' || k === 'd' || k === 'D') { keys.r = true; if (state === 'play') e.preventDefault(); }
+    else if (k === ' ' && state === 'play') { keys.f = true; e.preventDefault(); }
+    else if ((k === ' ' || k === 'Enter') && state === 'between' && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); next(); }
+  });
+  addEventListener('keyup', e => {
+    const k = e.key;
+    if (k === 'ArrowLeft' || k === 'a' || k === 'A') keys.l = false;
+    else if (k === 'ArrowRight' || k === 'd' || k === 'D') keys.r = false;
+    else if (k === ' ') keys.f = false;
+  });
+  addEventListener('blur', () => { keys.l = keys.r = keys.f = false; });
+  function hold(id, prop) {
+    const b = $(id);
+    b.addEventListener('pointerdown', e => { e.preventDefault(); keys[prop] = true; if (prop === 'f') fire(); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => { keys[prop] = false; }));
+  }
+  hold('padL', 'l'); hold('padR', 'r'); hold('padF', 'f');
+  let dragging = false;
+  function dragTo(e) { const r = canvas.getBoundingClientRect(); ship.x = clamp((e.clientX - r.left) / r.width * W, 28, W - 28); }
+  canvas.addEventListener('pointerdown', e => { if (state !== 'play') return; dragging = true; dragTo(e); try { canvas.setPointerCapture(e.pointerId); } catch (x) { } });
+  canvas.addEventListener('pointermove', e => { if (dragging) dragTo(e); });
+  ['pointerup', 'pointercancel'].forEach(ev => canvas.addEventListener(ev, () => { dragging = false; }));
+
+  /* ---------- wiring ---------- */
+  const chips = $('chips');
+  Object.entries(TOPICS).forEach(([k, t]) => {
+    const b = el('button', 'chip', t.label); b.type = 'button'; b.setAttribute('aria-pressed', 'true');
+    b.addEventListener('click', () => {
+      if (selected.has(k)) { if (selected.size === 1) return; selected.delete(k); } else selected.add(k);
+      b.setAttribute('aria-pressed', selected.has(k) ? 'true' : 'false');
+    });
+    chips.append(b);
+  });
+  $('start').addEventListener('click', () => { tone(440, 0.05, 'square', 0.02); startGame(); });
+  $('next').addEventListener('click', next);
+  $('again').addEventListener('click', toMenu);
+  $('mute').addEventListener('click', e => { muted = !muted; e.currentTarget.setAttribute('aria-pressed', String(muted)); e.currentTarget.textContent = muted ? 'Sound off' : 'Sound on'; });
+  $('best').textContent = best ? 'Best score: ' + best : '';
+  layout(4); hud(); fit(); requestAnimationFrame(loop);
+})();
+</script>
+
+</body></html>
