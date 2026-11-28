@@ -1,0 +1,305 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Equivalent Match</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Chakra+Petch:wght@500;600;700&display=swap">
+<style>
+  /* Layout: graph-paper page, status line, then a grid of 12 expression cards. Matched pairs take a shared color. */
+  :root {
+    --bg: #f3f5fc;
+    --grid: rgba(60, 84, 170, 0.07);
+    --card: #ffffff;
+    --fg: #141a38;
+    --dim: #566091;
+    --line: #c5cdea;
+    --accent: #2447d6;
+    --accent-ink: #ffffff;
+    --bad: #c92a3e;
+    --good: #0f7a58;
+    --p1: #ffd6d0; --p2: #ffe7ad; --p3: #bfeaf9; --p4: #dcd1ff; --p5: #c4f0d9; --p6: #ffcfe4;
+    --font-display: "Chakra Petch", "Trebuchet MS", sans-serif;
+    --font-body: "Atkinson Hyperlegible", "Segoe UI", Verdana, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c1230; --grid: rgba(150, 175, 255, 0.075); --card: #162052; --fg: #eef1ff; --dim: #9aa6d6;
+      --line: rgba(150, 175, 255, 0.3); --accent: #ffd23f; --accent-ink: #17120a; --bad: #ff7b8a; --good: #52e0a1;
+      --p1: #6b2f2a; --p2: #6b5320; --p3: #1f5a70; --p4: #4a3d85; --p5: #20614a; --p6: #703055;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c1230; --grid: rgba(150, 175, 255, 0.075); --card: #162052; --fg: #eef1ff; --dim: #9aa6d6;
+    --line: rgba(150, 175, 255, 0.3); --accent: #ffd23f; --accent-ink: #17120a; --bad: #ff7b8a; --good: #52e0a1;
+    --p1: #6b2f2a; --p2: #6b5320; --p3: #1f5a70; --p4: #4a3d85; --p5: #20614a; --p6: #703055;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { min-height: 100%; }
+  body {
+    background-color: var(--bg);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--fg);
+    font: 400 16px/1.45 var(--font-body);
+    padding-block: 14px 28px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .app { max-width: 880px; margin: 0 auto; display: grid; gap: 12px; }
+  .top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 10px 18px; }
+  .brand { font: 700 1.2rem/1 var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+  .brand small { display: block; margin-top: 5px; font: 500 0.7rem/1 var(--font-display); letter-spacing: 0.1em; color: var(--dim); }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 20px; font-variant-numeric: tabular-nums; }
+  .stat small { display: block; font: 500 0.64rem/1.2 var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+  .stat b { font: 700 1.2rem/1.1 var(--font-display); }
+  .status { margin: 0; min-height: 3em; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); overflow-wrap: anywhere; }
+  .status.good { border-color: var(--good); }
+  .status.bad { border-color: var(--bad); }
+  .status b { font-weight: 700; }
+
+  .grid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 440px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (min-width: 720px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .card {
+    min-height: 82px; padding: 8px 10px; display: grid; place-items: center; text-align: center;
+    background: var(--card); color: var(--fg); border: 2px solid var(--line); border-radius: 12px;
+    font: 700 clamp(1.05rem, 3.6vw, 1.3rem)/1.25 var(--font-body); overflow-wrap: anywhere; cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s, background-color 0.2s;
+  }
+  .card:hover:not(:disabled) { border-color: var(--accent); }
+  .card.sel { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); transform: translateY(-2px); }
+  .card.wrong { border-color: var(--bad); box-shadow: 0 0 0 3px var(--bad); animation: shake 0.35s; }
+  .card.done { background: var(--pc); border-color: transparent; cursor: default; }
+  .card:disabled { color: var(--fg); opacity: 1; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  @keyframes shake { 20% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 80% { transform: translateX(-3px); } }
+  @media (prefers-reduced-motion: reduce) { .card, .card.wrong { animation: none; transition: none; } }
+
+  .panel { border: 1px solid var(--line); border-radius: 12px; background: var(--card); padding: 16px; display: grid; gap: 10px; }
+  .panel h2 { margin: 0; font: 700 1.5rem/1.1 var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; }
+  .panel p { margin: 0; }
+  .btn { justify-self: start; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 12px 20px; font: 700 1rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+  .btn:hover { filter: brightness(1.1); }
+  .stars { font-size: 1.6rem; letter-spacing: 0.15em; color: var(--accent); }
+  .review { max-height: 300px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px; }
+  .review h3 { margin: 10px 0 4px; font: 600 0.72rem var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+  .review ul { margin: 0; padding: 0; list-style: none; }
+  .review li { padding: 8px 0; border-bottom: 1px dashed var(--line); overflow-wrap: anywhere; }
+  .review li:last-child { border-bottom: 0; }
+  .review .n { display: block; color: var(--dim); font-size: 0.9rem; }
+</style>
+
+<main class="app">
+  <header class="top">
+    <div class="brand">Equivalent Match<small>7th grade Algebra &middot; equivalent linear expressions</small></div>
+    <div class="stats">
+      <div class="stat"><small>Round</small><b id="sRound">1/4</b></div>
+      <div class="stat"><small>Matched</small><b id="sMatched">0/6</b></div>
+      <div class="stat"><small>Misses</small><b id="sMiss">0</b></div>
+      <div class="stat"><small>Time</small><b id="sTime">0:00</b></div>
+    </div>
+  </header>
+
+  <p class="status" id="status" role="status" aria-live="polite">Tap two cards that are equivalent expressions. Each card has exactly one partner. Watch the constants too. Some cards have the same number in front of the variable.</p>
+  <div class="grid" id="grid" role="group" aria-label="Expression cards"></div>
+
+  <section class="panel" id="roundDone" hidden>
+    <h2 id="rdTitle">Round complete</h2>
+    <p id="rdText"></p>
+    <button class="btn" id="nextRound" type="button">Next round</button>
+  </section>
+
+  <section class="panel" id="final" hidden>
+    <h2>All matched</h2>
+    <div class="stars" id="stars" aria-hidden="true"></div>
+    <p id="fText"></p>
+    <div class="review" id="review"></div>
+    <button class="btn" id="again" type="button">Play again</button>
+  </section>
+</main>
+
+<script>
+/*GEN*/
+const M = '−';
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const pick = a => a[rnd(0, a.length - 1)];
+const sgn = () => (Math.random() < 0.5 ? -1 : 1);
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); return b ? gcd(b, a % b) : a; }
+function num(n) {
+  const s = Math.abs(n), w = Math.floor(s + 1e-9), f = s - w;
+  const fr = Math.abs(f - 0.5) < 1e-9 ? '½' : Math.abs(f - 0.25) < 1e-9 ? '¼' : Math.abs(f - 0.75) < 1e-9 ? '¾' : '';
+  if (fr) return (w ? String(w) : '') + fr;
+  return String(Math.round(s));
+}
+function lin(a, b, v, cf) {
+  const A = Math.abs(a), B = Math.abs(b);
+  const ta = (A === 1 ? '' : num(A)) + v, tb = num(B);
+  if (a === 0) return (b < 0 ? M : '') + tb;
+  if (b === 0) return (a < 0 ? M : '') + ta;
+  if (cf) return (b < 0 ? M : '') + tb + ' ' + (a < 0 ? M : '+') + ' ' + ta;
+  return (a < 0 ? M : '') + ta + ' ' + (b < 0 ? M : '+') + ' ' + tb;
+}
+const trm = (c, v) => ({ neg: c < 0, body: (Math.abs(c) === 1 ? '' : num(c)) + v });
+const cst = d => ({ neg: d < 0, body: num(d) });
+const grp = (k, inner) => ({ neg: k < 0, body: (Math.abs(k) === 1 ? '' : num(k)) + '(' + inner + ')' });
+function join(items) { return items.map((it, i) => i === 0 ? (it.neg ? M : '') + it.body : ' ' + (it.neg ? M : '+') + ' ' + it.body).join(''); }
+const VARS = ['x', 'y', 'n', 'a', 'm', 't', 'p'];
+
+// Each builder returns one pair: two different-looking expressions with the same value a*v + b.
+function pDist(v) {
+  let k, c, d; do { k = pick([2, 3, 4, 5, 6, 7, 8, -2, -3, -4, -5]); c = sgn() * rnd(1, 5); d = sgn() * rnd(1, 9); } while (false);
+  return { a: k * c, b: k * d, left: join([grp(k, lin(c, d, v))]), right: lin(k * c, k * d, v), note: `Distribute ${k < 0 ? M + Math.abs(k) : k} to both terms.` };
+}
+function pFactor(v) {
+  let g, m, n; do { g = rnd(2, 9); m = rnd(1, 5); n = sgn() * rnd(1, 8); } while (gcd(m, n) !== 1 || (m === 1 && Math.abs(n) === 1));
+  return { a: g * m, b: g * n, left: lin(g * m, g * n, v), right: `${g}(${lin(m, n, v)})`, note: `Factor out the greatest common factor, ${g}.` };
+}
+function pCombine(v) {
+  let p, q, d1, d2; do { p = sgn() * rnd(1, 6); q = sgn() * rnd(1, 6); d1 = sgn() * rnd(1, 9); d2 = sgn() * rnd(1, 9); } while (p + q === 0 || d1 + d2 === 0);
+  return { a: p + q, b: d1 + d2, left: join([trm(p, v), cst(d1), trm(q, v), cst(d2)]), right: lin(p + q, d1 + d2, v), note: 'Combine the like terms.' };
+}
+function pTwo(v) {
+  let k1, k2, c1, c2, d1, d2, a, b;
+  do { k1 = pick([2, 3, 4, 5]); k2 = pick([-4, -3, -2, 2, 3]); c1 = sgn() * rnd(1, 3); c2 = sgn() * rnd(1, 3); d1 = sgn() * rnd(1, 8); d2 = sgn() * rnd(1, 8); a = k1 * c1 + k2 * c2; b = k1 * d1 + k2 * d2; }
+  while (a === 0 || b === 0 || Math.abs(a) > 20 || Math.abs(b) > 40);
+  return { a, b, left: join([grp(k1, lin(c1, d1, v)), grp(k2, lin(c2, d2, v))]), right: lin(a, b, v), note: 'Distribute each factor, then combine like terms.' };
+}
+function pNeg(v) {
+  let c, d, e; do { c = sgn() * rnd(1, 5); d = sgn() * rnd(1, 9); e = sgn() * rnd(1, 6); } while (e - c === 0);
+  return { a: e - c, b: -d, left: join([grp(-1, lin(c, d, v)), trm(e, v)]), right: lin(e - c, -d, v), note: 'Distribute the negative sign, then combine like terms.' };
+}
+function pFrac(v) {
+  const k = pick([0.5, -0.5, 0.25, 0.75]), unit = (k === 0.25 || k === 0.75) ? 4 : 2;
+  const c = sgn() * unit * rnd(1, 3), d = sgn() * unit * rnd(1, 3);
+  return { a: k * c, b: k * d, left: join([grp(k, lin(c, d, v))]), right: lin(k * c, k * d, v), note: `Multiply each term by ${k < 0 ? M : ''}${num(k)}.` };
+}
+function pMix(v) {
+  let p, k, c, d, a; do { p = sgn() * rnd(1, 6); k = pick([-4, -3, -2, 2, 3, 4, 5]); c = sgn() * rnd(1, 5); d = sgn() * rnd(1, 6); a = p + k * c; } while (a === 0);
+  return { a, b: k * d, left: join([trm(p, v), grp(k, lin(c, d, v, true))]), right: lin(a, k * d, v, true), note: 'Distribute, then combine like terms.' };
+}
+const PAIRS = 6;
+const POOLS = [
+  [pDist, pFactor, pCombine, pDist, pFactor, pCombine],
+  [pDist, pCombine, pTwo, pNeg, pMix, pFactor],
+  [pTwo, pNeg, pFrac, pFrac, pMix, pFactor],
+  [pTwo, pNeg, pFrac, pMix, pFactor, pDist]
+];
+// Pairs per "twin set": pairs in a set share the same variable coefficient and differ only in the constant,
+// so students must check the constants, not just the coefficient. Pairs outside a set have a unique coefficient.
+// f: the field the set shares. 'a' = same coefficient, different constants. 'b' = same constant, different coefficients.
+const TWINS = [{ f: 'a', s: [2] }, { f: 'a', s: [2, 2] }, { f: 'a', s: [3, 2] }, { f: 'b', s: [3, 2] }];
+function tryMake(f, v, ok) { for (let i = 0; i < 400; i++) { const p = f(v); if (ok(p)) return p; } return null; }
+function makeBoard(level) {
+  for (let tries = 0; tries < 2000; tries++) {
+    const v = pick(VARS), slots = shuffle([0, 1, 2, 3, 4, 5]), pairs = new Array(PAIRS);
+    const used = new Set(), anchors = new Set(); let pos = 0, fail = false;
+    const key = p => p.a + '|' + p.b;
+    const fld = TWINS[level].f;
+    for (const size of TWINS[level].s) {
+      let first = null;
+      for (let s = 0; s < size && !fail; s++, pos++) {
+        const f = POOLS[level][slots[pos]];
+        const p = s === 0 ? tryMake(f, v, p => !used.has(key(p)) && !anchors.has(p[fld]))
+                          : tryMake(f, v, p => p[fld] === first[fld] && !used.has(key(p)));
+        if (!p) { fail = true; break; }
+        if (s === 0) { first = p; anchors.add(p[fld]); }
+        used.add(key(p)); pairs[slots[pos]] = p;
+      }
+      if (fail) break;
+    }
+    if (fail) continue;
+    for (; pos < PAIRS && !fail; pos++) {
+      const p = tryMake(POOLS[level][slots[pos]], v, p => !used.has(key(p)) && !anchors.has(p[fld]));
+      if (!p) { fail = true; break; }
+      anchors.add(p[fld]); used.add(key(p)); pairs[slots[pos]] = p;
+    }
+    if (fail) continue;
+    const texts = new Set(pairs.flatMap(p => [p.left, p.right]));
+    if (texts.size === PAIRS * 2) return { v, pairs };
+  }
+  throw new Error('could not build board');
+}
+/*ENDGEN*/
+
+(function () {
+  const $ = id => document.getElementById(id);
+  const ROUNDS = POOLS.length;
+  let round = 0, board, cards, sel = -1, matched = 0, misses = 0, allMisses = 0, lock = false, t0 = 0, timer = null, played = [];
+
+  function fmtTime(ms) { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function setStatus(html, cls) { const s = $('status'); s.className = 'status ' + (cls || ''); s.textContent = ''; s.append(...html); }
+  const T = t => document.createTextNode(t);
+  const B = t => { const b = document.createElement('b'); b.textContent = t; return b; };
+  function hud() {
+    $('sRound').textContent = (round + 1) + '/' + ROUNDS; $('sMatched').textContent = matched + '/' + PAIRS; $('sMiss').textContent = allMisses + misses;
+  }
+  function startGame() {
+    round = 0; allMisses = 0; played = []; $('final').hidden = true; t0 = Date.now();
+    clearInterval(timer); timer = setInterval(() => { $('sTime').textContent = fmtTime(Date.now() - t0); }, 500);
+    startRound();
+  }
+  function startRound() {
+    board = makeBoard(round); matched = 0; misses = 0; sel = -1; lock = false;
+    cards = shuffle(board.pairs.flatMap((p, i) => [{ pi: i, text: p.left }, { pi: i, text: p.right }])).map(c => ({ ...c, done: false }));
+    $('roundDone').hidden = true;
+    const g = $('grid'); g.textContent = '';
+    cards.forEach((c, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'card'; b.textContent = c.text; b.id = 'card' + i;
+      b.setAttribute('aria-pressed', 'false'); b.addEventListener('click', () => pressed(i)); g.append(b);
+    });
+    const tip = TWINS[round].f === 'b'
+      ? 'This time some cards have the same constant, so check the numbers in front of the variable.'
+      : 'Watch the constants too. Some cards have the same number in front of the variable.';
+    setStatus([T('Round ' + (round + 1) + ': tap two cards that are equivalent expressions. ' + tip)]);
+    hud();
+  }
+  const el = i => $('card' + i);
+  function pressed(i) {
+    const c = cards[i]; if (lock || c.done) return;
+    if (sel === i) { sel = -1; el(i).classList.remove('sel'); el(i).setAttribute('aria-pressed', 'false'); return; }
+    if (sel < 0) { sel = i; el(i).classList.add('sel'); el(i).setAttribute('aria-pressed', 'true'); setStatus([T('Now tap the card that is equivalent to '), B(c.text), T('.')]); return; }
+    const j = sel; sel = -1;
+    if (cards[j].pi === c.pi) {
+      const p = board.pairs[c.pi]; matched++;
+      [i, j].forEach(k => { cards[k].done = true; const e = el(k); e.classList.remove('sel'); e.classList.add('done'); e.style.setProperty('--pc', 'var(--p' + (c.pi + 1) + ')'); e.disabled = true; e.setAttribute('aria-pressed', 'true'); });
+      setStatus([B('Match! '), T(p.left + '  =  ' + p.right + '. ' + p.note)], 'good'); hud();
+      if (matched === PAIRS) roundComplete();
+    } else {
+      misses++; lock = true; hud();
+      [i, j].forEach(k => { el(k).classList.remove('sel'); el(k).classList.add('wrong'); });
+      setStatus([B('Not equivalent. '), T('Check the numbers and signs, then try another pair.')], 'bad');
+      setTimeout(() => { [i, j].forEach(k => { el(k).classList.remove('wrong'); el(k).setAttribute('aria-pressed', 'false'); }); lock = false; }, 700);
+    }
+  }
+  function roundComplete() {
+    played.push({ round: round + 1, pairs: board.pairs });
+    allMisses += misses; misses = 0; hud();
+    if (round + 1 >= ROUNDS) return finish();
+    $('rdTitle').textContent = 'Round ' + (round + 1) + ' complete';
+    $('rdText').textContent = 'Misses so far: ' + allMisses + '. The next round is a little harder.';
+    $('roundDone').hidden = false; $('nextRound').focus({ preventScroll: false });
+  }
+  function finish() {
+    clearInterval(timer); const ms = Date.now() - t0; $('sTime').textContent = fmtTime(ms);
+    const stars = allMisses <= 4 ? 3 : allMisses <= 10 ? 2 : 1;
+    $('stars').textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+    $('fText').textContent = `You matched all ${ROUNDS * PAIRS} pairs in ${fmtTime(ms)} with ${allMisses} miss${allMisses === 1 ? '' : 'es'}.`;
+    const rv = $('review'); rv.textContent = '';
+    played.forEach(r => {
+      const h = document.createElement('h3'); h.textContent = 'Round ' + r.round; const ul = document.createElement('ul');
+      r.pairs.forEach(p => { const li = document.createElement('li'); li.textContent = p.left + '  =  ' + p.right; const n = document.createElement('span'); n.className = 'n'; n.textContent = p.note; li.append(n); ul.append(li); });
+      rv.append(h, ul);
+    });
+    $('final').hidden = false; $('again').focus({ preventScroll: false });
+  }
+  $('nextRound').addEventListener('click', () => { round++; startRound(); $('grid').scrollIntoView({ block: 'nearest' }); });
+  $('again').addEventListener('click', () => { startGame(); window.scrollTo(0, 0); });
+  startGame();
+})();
+</script>
+
+</body></html>
